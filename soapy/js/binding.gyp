@@ -3,12 +3,13 @@
     {
       'target_name': 'smodem',
       'sources': [
-      		 '../src/main.cpp',
-		 '../src/driver/signals.cpp'
-#		 '/usr/local/share/verilator/include/verilated.cpp'
-      		 ],
-      'include_dirs': ["<!@(node -p \"require('node-addon-api').include\")",
-      "../src/driver"
+'../src/main.cpp'
+,'../src/driver/signals.cpp'
+],
+      'include_dirs': [
+"<!@(node -p \"require('node-addon-api').include\")"
+,'../src/driver'
+,'../src/napi'
       # "/usr/local/share/verilator/include"
       ],
 #     'libraries': ["../obj_dir/verilator_global_libs.a"],
