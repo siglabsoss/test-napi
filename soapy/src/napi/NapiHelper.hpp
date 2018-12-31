@@ -15,6 +15,22 @@
 
 ///////
 //
+// For every type the system will see, you must copy a line here
+// void is the only type that does not have this line
+
+#define _CAP_RETURN_double auto returnValue = 
+#define _CAP_RETURN_int auto returnValue = 
+#define _CAP_RETURN_bool auto returnValue = 
+#define _CAP_RETURN_string auto returnValue = 
+#define _CAP_RETURN_unsigned auto returnValue = 
+#define _CAP_RETURN_void
+
+
+
+
+
+///////
+//
 // Add new code to check valid inputs for combinations of inputs
 
 #define _NAPI_VALIDATE_INPUTS_int_int() \
@@ -36,18 +52,18 @@
 // Add new code to pass args for combinations of signatures
 
 
-#define _NAPI_CALL_void_int(path,fn) \
+#define _NAPI_CALL_int(path,fn,rt) \
 auto first = info[0].As<Napi::Number>().Int32Value(); \
-path fn(first);
+_CAP_RETURN(rt) path fn(first);
 
-#define _NAPI_CALL_int_int(path,fn) \
-auto first = info[0].As<Napi::Number>().Int32Value(); \
-auto returnValue = path fn(first);
-
-#define _NAPI_CALL_int_int_int(path,fn) \
+#define _NAPI_CALL_int_int(path,fn,rt) \
 auto first = info[0].As<Napi::Number>().Int32Value(); \
 auto second = info[1].As<Napi::Number>().Int32Value(); \
-auto returnValue = path fn(first, second);
+_CAP_RETURN(rt) path fn(first, second);
+
+
+
+
 
 #define _NAPI_TAIL_int() \
   return Napi::Number::New(env, returnValue ); \
@@ -66,6 +82,23 @@ auto returnValue = path fn(first, second);
 
 #define _NAPI_HEAD(path,x,rt) __RETURNTYPE_##rt path x##__wrapped (const Napi::CallbackInfo& info) { \
   auto env = info.Env();
+
+
+
+
+
+
+
+
+// https://stackoverflow.com/questions/2831934/how-to-use-if-inside-define-in-the-c-preprocessor
+#define _CAP_RETURN2(x) _CAP_RETURN_##x
+#define _CAP_RETURN(x) _CAP_RETURN2(x)
+
+
+
+
+
+
 
 
 
@@ -92,13 +125,13 @@ _NAPI_TAIL_##rt()
 #define _NAPI_BODY4(path, fn, rt, t0) \
 _NAPI_HEAD(path,fn,rt) \
 _NAPI_VALIDATE_INPUTS_##t0() \
-_NAPI_CALL_##rt##_##t0(path, fn) \
+_NAPI_CALL_##t0(path, fn, rt) \
 _NAPI_TAIL_##rt()
 
 #define _NAPI_BODY5(path, fn, rt, t0, t1) \
 _NAPI_HEAD(path,fn,rt) \
 _NAPI_VALIDATE_INPUTS_##t0##_##t1() \
-_NAPI_CALL_##rt##_##t0##_##t1(path, fn) \
+_NAPI_CALL_##t0##_##t1(path, fn, rt) \
 _NAPI_TAIL_##rt()
 
 
