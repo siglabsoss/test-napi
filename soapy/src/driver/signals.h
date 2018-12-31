@@ -9,8 +9,14 @@ namespace signals {
   int foo(int,int);
   _NAPI_HEADER(int, foo);
 
-  
-  // Napi::Number foo__wrapped(const Napi::CallbackInfo& info);
+  int doubleit(int);
+  _NAPI_HEADER(int, doubleit);
+
+  int halfit(int);
+  _NAPI_HEADER(int, halfit);
+
+  void printint(int);
+  _NAPI_HEADER(void, printint);
 
   Napi::Object Init(Napi::Env env, Napi::Object exports);
 };

@@ -8,30 +8,42 @@ int signals::foo(int a, int b) {
   return a + b;
 }
 
-//Napi::Number signals::fooWrapped(const Napi::CallbackInfo& info)
 
-// Napi::Number signals::foo__wrapped(const Napi::CallbackInfo& info) {
-//   auto env = info.Env();
-//   bool call_ok = info.Length() < 2 || !info[0].IsNumber() || !info[1].IsNumber();
-//   if (call_ok) {
-//     Napi::TypeError::New(env, "Number expected").ThrowAsJavaScriptException();
-//   }
+_NAPI_BODY(signals::,doubleit,int,int);
+int signals::doubleit(int a) {
+  return a * 2 ;
+}
 
-//   auto first = info[0].As<Napi::Number>().Int32Value();
-//   auto second = info[1].As<Napi::Number>().Int32Value();
+namespace signals {
 
-//   int returnValue = signals::foo(first, second);
-  
-//   return Napi::Number::New(env, returnValue);
-// }
+
+_NAPI_BODY(,halfit,int,int);
+int halfit(int a) {
+  return a >> 1;
+}
+
+
+_NAPI_BODY(,printint,void,int);
+void printint(int a) {
+  std::cout << a << std::endl;
+}
+
+
+}
+
 
 
 void signals::debug(const Napi::CallbackInfo& info) {
   std::cout << "debug called" << std::endl;
   
-#if _NAPI_HEADERfoo(int)
-  std::cout << "YES" << std::endl;
-#endif
+  // std::uint32_t a = STATIC_HASH("hi");
+  
+
+// #if ((uint32_t)4) == 4
+// #if 0 == STATIC_STRCMP ("a","a")
+// #if 'c' == _STR(c)[0]
+//   std::cout << "YES" << std::endl;
+// #endif
 
 }
 
@@ -42,6 +54,11 @@ Napi::Object signals::Init(Napi::Env env, Napi::Object exports) {
   // exports.Set("cap", Napi::Function::New(env, cap));
 
   exports.Set("foo", Napi::Function::New(env, signals::foo__wrapped));
+  
+
+  exports.Set("doubleit", Napi::Function::New(env, signals::doubleit__wrapped));
+  
+  exports.Set("halfit", Napi::Function::New(env, signals::halfit__wrapped));
   
 
   exports.Set("debug", Napi::Function::New(env, signals::debug));
