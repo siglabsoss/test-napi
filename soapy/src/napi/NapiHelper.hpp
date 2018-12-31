@@ -5,13 +5,17 @@
 
 #define _VA_COUNT(...) _GET_NTH_ARG(__VA_ARGS__, 4, 3, 2, 1)
 
+///////
+//
+// Add new return types here
 
-#define _NAPI_HEAD_int(path,x) Napi::Number path x##__wrapped (const Napi::CallbackInfo& info) { \
-  auto env = info.Env();
+#define __RETURNTYPE_int Napi::Number
+#define __RETURNTYPE_void void
 
-#define _NAPI_HEAD_void(path,x) void path x##__wrapped (const Napi::CallbackInfo& info) { \
-  auto env = info.Env();
 
+///////
+//
+// Add new code to check valid inputs for combinations of inputs
 
 #define _NAPI_VALIDATE_INPUTS_int_int() \
   bool call_ok = info.Length() < 2 || !info[0].IsNumber() || !info[1].IsNumber(); \
@@ -25,6 +29,12 @@
   if (call_ok) { \
     Napi::TypeError::New(env, "Number expected").ThrowAsJavaScriptException(); \
   }
+
+
+///////
+//
+// Add new code to pass args for combinations of signatures
+
 
 #define _NAPI_CALL_void_int(path,fn) \
 auto first = info[0].As<Napi::Number>().Int32Value(); \
@@ -48,13 +58,16 @@ auto returnValue = path fn(first, second);
 }
 
 
-#define __TYPE_int 1
-#define _NAPI_HEADERfoo(x) __TYPE_##x
 
-#define __RETURNTYPE_int Napi::Number
-#define __RETURNTYPE_void void
 
-#define _NAPI_HEADER(x,fn) __RETURNTYPE_##x fn##__wrapped(const Napi::CallbackInfo& info);
+
+#define _NAPI_HEADER(rt,fn) __RETURNTYPE_##rt fn##__wrapped(const Napi::CallbackInfo& info);
+
+
+#define _NAPI_HEAD(path,x,rt) __RETURNTYPE_##rt path x##__wrapped (const Napi::CallbackInfo& info) { \
+  auto env = info.Env();
+
+
 
 /////////////////
 //
@@ -72,18 +85,18 @@ _GET_NAPI_BODY_MACRO(__VA_ARGS__, _NAPI_BODY6, _NAPI_BODY5, _NAPI_BODY4, _NAPI_B
 
 
 #define _NAPI_BODY3(path, fn, rt) \
-_NAPI_HEAD_##rt(path,fn) \
+_NAPI_HEAD(path,fn,rt) \
 _NAPI_CALL_##rt(path, fn) \
 _NAPI_TAIL_##rt()
 
 #define _NAPI_BODY4(path, fn, rt, t0) \
-_NAPI_HEAD_##rt(path,fn) \
+_NAPI_HEAD(path,fn,rt) \
 _NAPI_VALIDATE_INPUTS_##t0() \
 _NAPI_CALL_##rt##_##t0(path, fn) \
 _NAPI_TAIL_##rt()
 
 #define _NAPI_BODY5(path, fn, rt, t0, t1) \
-_NAPI_HEAD_##rt(path,fn) \
+_NAPI_HEAD(path,fn,rt) \
 _NAPI_VALIDATE_INPUTS_##t0##_##t1() \
 _NAPI_CALL_##rt##_##t0##_##t1(path, fn) \
 _NAPI_TAIL_##rt()
