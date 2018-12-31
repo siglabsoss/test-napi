@@ -3,14 +3,13 @@
 
 #include <iostream>
 
+_NAPI_BODY(signals::,foo,int,int,int);
 int signals::foo(int a, int b) {
   return a + b;
 }
 
 //Napi::Number signals::fooWrapped(const Napi::CallbackInfo& info)
-_NAPI_HEAD(signals::,foo)
-_NAPI_VALIDATE_CALL()
-_NAPI_TAIL()
+
 // Napi::Number signals::foo__wrapped(const Napi::CallbackInfo& info) {
 //   auto env = info.Env();
 //   bool call_ok = info.Length() < 2 || !info[0].IsNumber() || !info[1].IsNumber();
