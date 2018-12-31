@@ -1,9 +1,6 @@
 #pragma once
 
 
-#define _VA_GET(_1, _2, _3, _4, N, ...) N
-
-#define _VA_COUNT(...) _GET_NTH_ARG(__VA_ARGS__, 4, 3, 2, 1)
 
 ///////
 //
@@ -24,8 +21,6 @@
 #define _CAP_RETURN_string auto returnValue = 
 #define _CAP_RETURN_unsigned auto returnValue = 
 #define _CAP_RETURN_void
-
-
 
 
 
@@ -50,7 +45,7 @@
 ///////
 //
 // Add new code to pass args for combinations of signatures
-
+// this could be combined with previous section
 
 #define _NAPI_CALL_int(path,fn,rt) \
 auto first = info[0].As<Napi::Number>().Int32Value(); \
@@ -63,7 +58,9 @@ _CAP_RETURN(rt) path fn(first, second);
 
 
 
-
+///////
+//
+// Add new code for converting return types
 
 #define _NAPI_TAIL_int() \
   return Napi::Number::New(env, returnValue ); \
@@ -85,11 +82,6 @@ _CAP_RETURN(rt) path fn(first, second);
 
 
 
-
-
-
-
-
 // https://stackoverflow.com/questions/2831934/how-to-use-if-inside-define-in-the-c-preprocessor
 #define _CAP_RETURN2(x) _CAP_RETURN_##x
 #define _CAP_RETURN(x) _CAP_RETURN2(x)
@@ -98,6 +90,9 @@ _CAP_RETURN(rt) path fn(first, second);
 
 
 
+#define _VA_GET(_1, _2, _3, _4, N, ...) N
+
+#define _VA_COUNT(...) _GET_NTH_ARG(__VA_ARGS__, 4, 3, 2, 1)
 
 
 
