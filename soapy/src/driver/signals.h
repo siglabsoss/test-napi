@@ -18,5 +18,8 @@ namespace signals {
   void printint(int);
   _NAPI_HEADER(void, printint);
 
+  void startThread(void);
+  _NAPI_HEADER(void, startThread);
+
   Napi::Object Init(Napi::Env env, Napi::Object exports);
 };

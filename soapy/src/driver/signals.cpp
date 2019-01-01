@@ -3,6 +3,20 @@
 
 #include <iostream>
 
+
+
+#include <iostream>
+#include <unistd.h> //usleep
+#include <mutex>
+#include <atomic>
+#include <condition_variable>
+#include <set>
+
+#include <thread>
+
+
+
+
 _NAPI_BODY(signals::,foo,int,int,int);
 int signals::foo(int a, int b) {
   return a + b;
@@ -11,7 +25,7 @@ int signals::foo(int a, int b) {
 
 _NAPI_BODY(signals::,doubleit,int,int);
 int signals::doubleit(int a) {
-  return a * 2 ;
+  return a * 2;
 }
 
 namespace signals {
@@ -26,6 +40,24 @@ int halfit(int a) {
 _NAPI_BODY(,printint,void,int);
 void printint(int a) {
   std::cout << a << std::endl;
+}
+
+std::thread a_thread;
+
+void threadMain(void) {
+  auto i = 0;
+  while(1) {
+    std::cout << i << std::endl;
+    i++;
+  }
+}
+
+
+_NAPI_BODY(,startThread,void,void);
+void startThread(void) {
+  std::cout << "start thread" << std::endl;
+  // rtlsdr_reset_buffer(dev);
+  a_thread = std::thread(&threadMain);
 }
 
 
@@ -53,16 +85,19 @@ Napi::Object signals::Init(Napi::Env env, Napi::Object exports) {
   // auto cap = [] () { std::cout << "cap" << std::endl; };
   // exports.Set("cap", Napi::Function::New(env, cap));
 
-  exports.Set("foo", Napi::Function::New(env, signals::foo__wrapped));
-  
+  // exports.Set("doubleit", Napi::Function::New(env, signals::doubleit__wrapped));
 
-  exports.Set("doubleit", Napi::Function::New(env, signals::doubleit__wrapped));
+  _NAPI_BIND_NAME("foo",signals::,foo);
   
-  exports.Set("halfit", Napi::Function::New(env, signals::halfit__wrapped));
-  
+  _NAPI_BIND_NAME("doubleit",signals::,doubleit);
 
-  exports.Set("debug", Napi::Function::New(env, signals::debug));
+  _NAPI_BIND_NAME("halfit",signals::,halfit);
+
+  _NAPI_BIND_MANUAL("debug",signals::,debug);
   
+  exports.Set("startThread", Napi::Function::New(env, signals::startThread__wrapped));
+  
+  _NAPI_BIND_NAME("startThread",signals::,startThread);
 
   return exports;
 }

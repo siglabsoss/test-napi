@@ -41,6 +41,12 @@
     Napi::TypeError::New(env, "Number expected").ThrowAsJavaScriptException(); \
   }
 
+#define _NAPI_VALIDATE_INPUTS_void() \
+  bool call_ok = info.Length() == 0; \
+  if (call_ok) { \
+    Napi::TypeError::New(env, "Not expecting arguments").ThrowAsJavaScriptException(); \
+  }
+
 
 ///////
 //
@@ -56,6 +62,8 @@ auto first = info[0].As<Napi::Number>().Int32Value(); \
 auto second = info[1].As<Napi::Number>().Int32Value(); \
 _CAP_RETURN(rt) path fn(first, second);
 
+#define _NAPI_CALL_void(path,fn,rt) \
+_CAP_RETURN(rt) path fn();
 
 
 ///////
@@ -130,6 +138,14 @@ _NAPI_CALL_##t0##_##t1(path, fn, rt) \
 _NAPI_TAIL_##rt()
 
 
+
+
+#define _NAPI_BIND_NAME(name,path,fn) \
+exports.Set(name, Napi::Function::New(env, path fn##__wrapped))
+
+
+#define _NAPI_BIND_MANUAL(name,path,fn) \
+exports.Set(name, Napi::Function::New(env, path fn))
 
 
 /////////

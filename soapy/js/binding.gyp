@@ -5,6 +5,9 @@
       'sources': [
 '../src/main.cpp'
 ,'../src/driver/signals.cpp'
+
+# '../src/cbexample.cpp'
+
 ],
       'include_dirs': [
 "<!@(node -p \"require('node-addon-api').include\")"
