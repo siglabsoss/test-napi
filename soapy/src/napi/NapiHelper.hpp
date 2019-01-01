@@ -29,22 +29,23 @@
 // Add new code to check valid inputs for combinations of inputs
 
 #define _NAPI_VALIDATE_INPUTS_int_int() \
-  bool call_ok = info.Length() < 2 || !info[0].IsNumber() || !info[1].IsNumber(); \
-  if (call_ok) { \
+  bool call_notok = info.Length() < 2 || !info[0].IsNumber() || !info[1].IsNumber(); \
+  if (call_notok) { \
     Napi::TypeError::New(env, "Number expected").ThrowAsJavaScriptException(); \
   }
 
 
 #define _NAPI_VALIDATE_INPUTS_int() \
-  bool call_ok = info.Length() < 1 || !info[0].IsNumber(); \
-  if (call_ok) { \
+  bool call_notok = info.Length() < 1 || !info[0].IsNumber(); \
+  if (call_notok) { \
     Napi::TypeError::New(env, "Number expected").ThrowAsJavaScriptException(); \
   }
 
 #define _NAPI_VALIDATE_INPUTS_void() \
-  bool call_ok = info.Length() == 0; \
-  if (call_ok) { \
+  bool call_notok = info.Length() != 0; \
+  if (call_notok) { \
     Napi::TypeError::New(env, "Not expecting arguments").ThrowAsJavaScriptException(); \
+    return; \
   }
 
 

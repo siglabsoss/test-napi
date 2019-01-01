@@ -8,3 +8,7 @@ if(smodem.doubleit(7) != 14) throw("");
 if(smodem.halfit(10) != 5) throw("");
 
 smodem.debug();
+
+smodem.startThread();
+
+setTimeout(function(){console.log('done')},3000);
