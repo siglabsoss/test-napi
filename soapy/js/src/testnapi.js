@@ -1,14 +1,22 @@
-const smodem = require('../build/Release/smodem.node');
 
-let c = smodem.foo(1,4);
-console.log(c);
+const addon = require('../build/Release/smodem.node');
+const assert = require('assert');
 
-if(smodem.doubleit(7) != 14) throw("");
+addon.RunCallback(function(msg) {
+    console.log(msg);
+  // assert.strictEqual(msg, 'hello world');
+});
 
-if(smodem.halfit(10) != 5) throw("");
+function testRecv(desiredRecv) {
+  addon.RunCallbackWithRecv(function() {
+    // assert.strictEqual(this, desiredRecv);
+  }, desiredRecv);
+}
 
-smodem.debug();
-
-smodem.startThread();
-
-setTimeout(function(){console.log('done')},3000);
+testRecv(undefined);
+testRecv(null);
+testRecv(5);
+testRecv(true);
+testRecv('Hello');
+testRecv([]);
+testRecv({});
