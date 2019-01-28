@@ -70,6 +70,22 @@ void startThread(void) {
 void signals::debug(const Napi::CallbackInfo& info) {
   std::cout << "debug called" << std::endl;
   
+  // print table
+  if( false ) {
+    uint32_t foo;
+    uint64_t large = 1;
+
+    for(auto i = 0; i < 64; i++) {
+      foo = large + i;
+      std::cout << "i: " << i << "    "    << foo << std::endl;
+
+      large *= 2;
+    }
+  }
+
+  std::cout << "debug called" << std::endl;
+
+  
   // std::uint32_t a = STATIC_HASH("hi");
   
 
