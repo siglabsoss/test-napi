@@ -8,8 +8,9 @@
       "mustache": "latest"
    },
    "scripts": {
+      "build_changed": "node-gyp build -j 4",
       "build": "node-gyp rebuild",
-      "clean": "node-gyp clean && make clean",
+      "clean": "node-gyp clean",
       "all": "npm run clean && npm run compile && npm run build && npm run test",
       "test": "node index.js"
    },
