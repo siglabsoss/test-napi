@@ -30,6 +30,22 @@
       'msvs_settings': {
         'VCCLCompilerTool': { 'ExceptionHandling': 1 },
       }
+    },
+
+
+
+    {
+      'target_name': 'vectorops',
+      'sources':[
+      '../src/cbexample.cpp'
+      ],
+      'include_dirs': [
+      '../src/driver'
+      ,'../src/napi'
+      ]
     }
+
+
+
   ]
 }
