@@ -82,9 +82,9 @@ static void workAsync2(uv_work_t *req)
 
     // as soon as we return, the other callback will fire
 
-    static int times = 0;
+    // static int times = 0;
 
-    times++;
+    // times++;
 
 
     // that wasn't really that long of an operation, so lets pretend it took longer...
@@ -134,9 +134,18 @@ static void workAsyncComplete2(uv_work_t *req, int status)
     // https://stackoverflow.com/questions/13826803/calling-javascript-function-from-a-c-callback-in-v8/28554065#28554065
     Local<Function>::New(isolate, work->callback)->Call(isolate->GetCurrentContext()->Global(), 1, argv);
 
+
+    static int times = 0;
+
+    times++;
+
+    if( times < 3 ) {
+      uv_queue_work(uv_default_loop(),&work->request,workAsync2,workAsyncComplete2);
+    }
+
     // Free up the persistent function callback
-    work->callback.Reset();
-    delete work;
+    // work->callback.Reset();
+    // delete work;
 
 }
 
@@ -313,7 +322,7 @@ void setStreamCallback(const v8::FunctionCallbackInfo<v8::Value>&args) {
     Local<Function> callback = Local<Function>::Cast(args[0]);
     work->callback.Reset(isolate, callback);
 
-    // kick of the worker thread
+    // kick off the worker thread
     uv_queue_work(uv_default_loop(),&work->request,workAsync2,workAsyncComplete2);
 
 
