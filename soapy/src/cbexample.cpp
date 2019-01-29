@@ -211,23 +211,41 @@ void GetBuffer(const FunctionCallbackInfo<Value>& args) {
   args.GetReturnValue().Set(buffer.ToLocalChecked());
 }
 
-// void TransformBuffer(const FunctionCallbackInfo<Value>& info)
+// https://github.com/nodejs/nan/issues/749
+// https://github.com/bcoin-org/bcrypto/issues/7
 NAN_METHOD(TransformBuffer)
 {
-    Local<Object> bufferObj = info[0]->ToObject();
-    const unsigned int length = info[1]->Uint32Value();
-    const char* dataIn = node::Buffer::Data(bufferObj);
-    // const uint32_t* asintIn = (uint32_t*) dataIn;
+  // I am very unclear on the difference between this code for info[0]
+  // and code beloe for info[1]
+  // possibly because we want to end up with a Local<Object> in the first case
+  // and a uint32_t in the second
+  MaybeLocal<Object> maybeBufferObj =  Nan::To<Object>(info[0]);
+  Local<Object> bufferObj;
+  if (!maybeBufferObj.ToLocal(&bufferObj)) {
+    cout << "Argument 0 Invalid in call to TransformBuffer" << endl;
+    return;
+  }
 
-    char *dataOut = (char*)malloc(length);
-    // uint32_t *asint = (uint32_t*) dataIn;
+  uint32_t length = info[1]->Uint32Value(Nan::GetCurrentContext()).ToChecked();
 
-    for(unsigned i = 0; i < length/4; i++) {
-      dataOut[i] = dataIn[i] & 0xf0f0f0f0;
-    }
+  const char* dataIn = node::Buffer::Data(bufferObj);
+  // const uint32_t* asintIn = (uint32_t*) dataIn;
 
-    MaybeLocal<Object> buffer = Nan::NewBuffer(dataOut, length);
-    info.GetReturnValue().Set(buffer.ToLocalChecked());
+  char *dataOut = (char*)malloc(length);
+  // uint32_t *asint = (uint32_t*) dataIn;
+
+  for(unsigned i = 0; i < length/4; i++) {
+    dataOut[i] = dataIn[i] & 0xf0f0f0f0;
+  }
+
+  MaybeLocal<Object> buffer = Nan::NewBuffer(dataOut, length);
+  info.GetReturnValue().Set(buffer.ToLocalChecked());
+
+
+
+
+
+
 
     // char* msg = Nan::Buffer::Data(bufferObj);
 
