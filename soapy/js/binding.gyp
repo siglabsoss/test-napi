@@ -36,11 +36,14 @@
 
     {
       'target_name': 'vectorops'
+      ,'cflags': [ '-Werror=return-type' ]
+      ,'cflags_cc': [ '-Werror=return-type' ]
 
       ,'sources':[
       '../src/cbexample.cpp'
       ,'cpp/BevPair2.cpp'
       ,'cpp/BevStream.cpp'
+      ,'cpp/GainStream.cpp'
       ]
 
       ,'include_dirs': [

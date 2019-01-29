@@ -8,6 +8,8 @@
 #include <event2/thread.h>
 #include <event2/bufferevent.h>
 
+#include "BevPair2.hpp"
+
 
 namespace BevStream {
 
@@ -16,7 +18,7 @@ public:
     BevStream();
 
     struct event_base *evbase;
-    int stopThread();
+    void stopThread();
     virtual void stopThreadDerivedClass() = 0;
 
     void threadMain();

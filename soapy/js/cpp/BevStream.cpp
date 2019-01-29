@@ -105,11 +105,10 @@ void BevStream::threadMain() {
     std::cout << "BevStream::threadMain() closing" << std::endl;
 }
 
-int BevStream::stopThread() {
+void BevStream::stopThread() {
     cout << "fixme stopThread()" << endl;
     _thread_should_terminate = true;
     stopThreadDerivedClass();
-    return 0;
 }
 
 
