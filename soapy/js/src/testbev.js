@@ -70,9 +70,9 @@ function test_transform_buffer() {
   addon.setStreamCallback(function(res) {
     console.log('stream callback');
     console.log(res);
-    let uint32_view = new Uint32Array(res.buffer);
-    console.log('uint32 view:');
-    console.log(uint32_view[0].toString(16));
+    // let uint32_view = new Uint32Array(res.buffer);
+    // console.log('uint32 view:');
+    // console.log(uint32_view[0].toString(16));
   });
 
   setInterval(()=>{  addon.writeStreamData(buffer, buffer.length) }, 1000);
@@ -146,6 +146,6 @@ function test_torture() {
 // test_callback();
 
 // test_get_buffer();
-// test_transform_buffer();
-test_torture();
+test_transform_buffer();
+// test_torture();
 // run_bench();
