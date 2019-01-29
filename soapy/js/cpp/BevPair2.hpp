@@ -8,7 +8,7 @@
 #include <event2/thread.h>
 #include <event2/bufferevent.h>
 
-namespace BevPipe {
+namespace BevStream {
 
 // Write to in
 // Read from out

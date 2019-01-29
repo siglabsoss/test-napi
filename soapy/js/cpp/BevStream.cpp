@@ -1,4 +1,4 @@
-#include "BevPipe.hpp"
+#include "BevStream.hpp"
 
 #include <math.h>
 #include <cmath>
@@ -8,7 +8,7 @@
 #include <iostream>
 #include <unistd.h>
 
-namespace BevPipe {
+namespace BevStream {
 
 using namespace std;
 
@@ -43,10 +43,10 @@ using namespace std;
 
 
 
-BevPipe::BevPipe():_thread_should_terminate(false) {
+BevStream::BevStream():_thread_should_terminate(false) {
 
 
-    cout << "BevPipe() ctons" << endl;
+    cout << "BevStream() ctons" << endl;
     
     evthread_use_pthreads();
     // construct here or in thread?
@@ -64,10 +64,10 @@ BevPipe::BevPipe():_thread_should_terminate(false) {
     // }
 
     // pass this
-    _thread = std::thread(&BevPipe::threadMain, this);
+    _thread = std::thread(&BevStream::threadMain, this);
 }
 
-void BevPipe::threadMain() {
+void BevStream::threadMain() {
     // HiggsDriver *soapy = (HiggsDriver*)userdata;
     // size_t i = (size_t)userdata;
     // char c = *((char*)userdata);
@@ -80,9 +80,9 @@ void BevPipe::threadMain() {
     auto retval = event_base_loop(evbase, EVLOOP_NO_EXIT_ON_EMPTY);
 
 
-    cout << "!!!!!!!!!!!!!!!!! BevPipe::threadMain() exiting " << endl;
-    cout << "!!!!!!!!!!!!!!!!! BevPipe::threadMain() exiting " << endl;
-    cout << "!!!!!!!!!!!!!!!!! BevPipe::threadMain() exiting " << endl;
+    cout << "!!!!!!!!!!!!!!!!! BevStream::threadMain() exiting " << endl;
+    cout << "!!!!!!!!!!!!!!!!! BevStream::threadMain() exiting " << endl;
+    cout << "!!!!!!!!!!!!!!!!! BevStream::threadMain() exiting " << endl;
     
 
     printf("event_base_dispatch: %i\n", retval);
@@ -102,13 +102,14 @@ void BevPipe::threadMain() {
 
     // }
 
-    std::cout << "BevPipe::threadMain() closing" << std::endl;
+    std::cout << "BevStream::threadMain() closing" << std::endl;
 }
 
-int BevPipe::stopThread() {
+int BevStream::stopThread() {
     cout << "fixme stopThread()" << endl;
     _thread_should_terminate = true;
     stopThreadDerivedClass();
+    return 0;
 }
 
 

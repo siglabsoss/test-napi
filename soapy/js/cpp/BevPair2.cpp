@@ -2,7 +2,7 @@
 
 #include <event2/buffer.h>
 
-namespace BevPipe {
+namespace BevStream {
 
 BevPair2::BevPair2() : in(0), out(0) {
     

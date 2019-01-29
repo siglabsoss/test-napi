@@ -9,11 +9,11 @@
 #include <event2/bufferevent.h>
 
 
-namespace BevPipe {
+namespace BevStream {
 
-class BevPipe {
+class BevStream {
 public:
-    BevPipe();
+    BevStream();
 
     struct event_base *evbase;
     int stopThread();
