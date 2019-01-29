@@ -1,9 +1,18 @@
 // addon.cc
+
+#pragma GCC diagnostic push 
+#pragma GCC diagnostic ignored "-Wcast-function-type"
 #include <node.h>
 #include <v8.h>
+#include <nan.h>
+#pragma GCC diagnostic pop
+
+
+
+
+
 #include <uv.h>
 
-#include <nan.h>
 
 #include <string>
 #include <iostream>
@@ -13,6 +22,7 @@
 #include <thread>
 #include <iostream>
 
+#include "BevPair2.hpp"
 
 namespace demo {
 
@@ -29,7 +39,6 @@ using v8::Value;
 using namespace v8;
 
 using namespace std;
-// using namespace Nan;
 
 /////////////////////////////////
 //
@@ -208,12 +217,12 @@ NAN_METHOD(TransformBuffer)
     Local<Object> bufferObj = info[0]->ToObject();
     const unsigned int length = info[1]->Uint32Value();
     const char* dataIn = node::Buffer::Data(bufferObj);
-    const uint32_t* asintIn = (uint32_t*) dataIn;
+    // const uint32_t* asintIn = (uint32_t*) dataIn;
 
     char *dataOut = (char*)malloc(length);
-    uint32_t *asint = (uint32_t*) dataIn;
+    // uint32_t *asint = (uint32_t*) dataIn;
 
-    for(auto i = 0; i < length/4; i++) {
+    for(unsigned i = 0; i < length/4; i++) {
       dataOut[i] = dataIn[i] & 0xf0f0f0f0;
     }
 
@@ -263,8 +272,14 @@ NAN_MODULE_INIT(Init) {
   NODE_SET_METHOD(target, "GetBuffer", GetBuffer);
   // NODE_SET_METHOD(target, "TransformBuffer", TransformBuffer);
   NAN_EXPORT(target, TransformBuffer);
+
+  auto udp_payload_bev = new BevPipe::BevPair2();
+  (void)udp_payload_bev;
 }
 
+#pragma GCC diagnostic push 
+#pragma GCC diagnostic ignored "-Wcast-function-type"
 NODE_MODULE(NODE_GYP_MODULE_NAME, Init)
+#pragma GCC diagnostic pop
 
 }  // namespace demo

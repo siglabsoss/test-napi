@@ -35,15 +35,21 @@
 
 
     {
-      'target_name': 'vectorops',
-      'sources':[
+      'target_name': 'vectorops'
+
+      ,'sources':[
       '../src/cbexample.cpp'
-      ],
-      'include_dirs': [
+      ,'cpp/BevPair2.cpp'
+      ]
+
+      ,'include_dirs': [
       '../src/driver'
       ,'../src/napi'
+      ,'./cpp'
       ,"<!(node -e \"require('nan')\")"
       ]
+
+      ,"libraries": [ "/usr/local/lib/libevent.so" ]
     }
 
 
