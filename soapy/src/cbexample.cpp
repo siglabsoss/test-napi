@@ -3,13 +3,14 @@
 #include <v8.h>
 #include <uv.h>
 
+#include <nan.h>
+
 #include <string>
 #include <iostream>
 #include <vector>
 #include <algorithm>
 #include <chrono>
 #include <thread>
-
 #include <iostream>
 
 
@@ -180,7 +181,27 @@ void CalculateResultsAsync(const v8::FunctionCallbackInfo<v8::Value>&args) {
 
 
 
+////////////////////
+//
+// NAN buffer
 
+void GetBuffer(const FunctionCallbackInfo<Value>& args) {
+  char *data = (char*)malloc(1024*4);
+  size_t length = 1024*4;
+  uint32_t *asint = (uint32_t*) data;
+
+  for(auto i = 0; i < 1024; i++) {
+    asint[i] = 0;
+  }
+
+  asint[0] = 0xdeadbeef;
+  
+
+
+
+  MaybeLocal<Object> buffer = Nan::NewBuffer(data, length);
+  args.GetReturnValue().Set(buffer.ToLocalChecked());
+}
 
 
 
@@ -207,6 +228,7 @@ void RunCallback(const FunctionCallbackInfo<Value>& args) {
 void Init(Local<Object> exports, Local<Object> module) {
   NODE_SET_METHOD(exports, "runCallback", RunCallback);
   NODE_SET_METHOD(exports, "calculate_results_async", CalculateResultsAsync);
+  NODE_SET_METHOD(exports, "GetBuffer", GetBuffer);
 }
 
 NODE_MODULE(NODE_GYP_MODULE_NAME, Init)

@@ -3,9 +3,13 @@
    "version": "1.0.0",
    "main": "index.js",
    "dependencies": {
-      "node-addon-api": "latest",
+      "benchmark": "^2.1.4",
+      "kind-of": "^6.0.2",
       "lodash": "latest",
-      "mustache": "latest"
+      "microtime": "^2.1.9",
+      "mustache": "latest",
+      "nan": "^2.12.1",
+      "node-addon-api": "latest"
    },
    "scripts": {
       "build_changed": "node-gyp build -j 4",

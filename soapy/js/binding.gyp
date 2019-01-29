@@ -42,6 +42,7 @@
       'include_dirs': [
       '../src/driver'
       ,'../src/napi'
+      ,"<!(node -e \"require('nan')\")"
       ]
     }
 
