@@ -15,13 +15,13 @@ BevPair2& BevPair2::set(struct bufferevent * rsps_bev[2]) {
     return *this;
 }
 
-// BevPair2& BevPair2::enableLocking() {
-//     evbuffer_enable_locking(bufferevent_get_input(in), NULL);
-//     evbuffer_enable_locking(bufferevent_get_output(in), NULL);
-//     evbuffer_enable_locking(bufferevent_get_input(out), NULL);
-//     evbuffer_enable_locking(bufferevent_get_output(out), NULL);
+BevPair2& BevPair2::enableLocking() {
+    evbuffer_enable_locking(bufferevent_get_input(in), NULL);
+    evbuffer_enable_locking(bufferevent_get_output(in), NULL);
+    evbuffer_enable_locking(bufferevent_get_input(out), NULL);
+    evbuffer_enable_locking(bufferevent_get_output(out), NULL);
 
-//     return *this;
-// }
+    return *this;
+}
 
 }

@@ -9,49 +9,28 @@
 #include <unistd.h>
 #include <cassert>
 
+#include <event2/buffer.h>
+
 namespace BevStream {
 
 using namespace std;
 
 
-// static void
-// _example_clock_event(int fd, short kind, void *userp)
-// {
-//     /* Print current time. */
-//     time_t t = time(NULL);
-//     int now_s = t % 60;
-//     int now_m = (t / 60) % 60;
-//     int now_h = (t / 3600) % 24;
-//     /* The trailing \r will make cursor return to the beginning
-//      * of the current line. */
-//     printf("%02d:%02d:%02d\n", now_h, now_m, now_s);
-//     fflush(stdout);
-
-//     /* Next clock update in one second. */
-//     /* (A more prudent timer strategy would be to update clock
-//      * on the next second _boundary_.) */
-
-
-//     struct timeval timeout = { .tv_sec = 10, .tv_usec = 0 };
-//     HiggsEvent* event = (HiggsEvent*)userp;
-//     evtimer_add(event->_example_event, &timeout);
-// }
-
-
-
 /////////////////////////////
 
-static void _handle_udp_callback(struct bufferevent *bev, void *_dsp)
+static void _handle_data_wrapper(struct bufferevent *bev, void *_cls)
 {
-    BevStream *dsp = reinterpret_cast<BevStream*>(_dsp);
-    (void)dsp;
+    BevStream *cls = reinterpret_cast<BevStream*>(_cls);
+    struct evbuffer *input = bufferevent_get_input(bev);
+    size_t len = evbuffer_get_length(input);
 
-    // struct evbuffer *input = bufferevent_get_input(bev);
-    // dsp->parseFeedbackBuffer(input, dsp);
+    cls->gotData(bev,input,len);
+    
+    cout << "_handle_data_wrapper" << endl;
 }
 
-static void _handle_udp_event(bufferevent* d, short kind, void* v) {
-     cout << "_handle_udp_event" << endl;
+static void _handle_event_wrapper(bufferevent* bev, short kind, void* v) {
+     cout << "_handle_event_wrapper" << endl;
 }
 
 
@@ -158,15 +137,29 @@ void BevStream::setupBuffers() {
         rsps_bev);
     assert(ret>=0);
 
-    bev = new BevPair2();
-    bev->set(rsps_bev);
+    pair = new BevPair2();
+    pair->set(rsps_bev);
 
-    setBufferOptions(bev->in, bev->out); // this will take care of this:
+    // copy to member
+    input  = bufferevent_get_input(pair->in);
+
+    setBufferOptions(pair->in, pair->out); // this will take care of this:
     // bufferevent_setwatermark(bev->out, EV_READ, (1024+16)*4, 0);
     // bufferevent_set_max_single_read(bev->out, (1024+16)*4 );
 
-    bufferevent_setcb(bev->out, _handle_udp_callback, NULL, _handle_udp_event, this);
-    bufferevent_enable(bev->out, EV_READ | EV_WRITE | EV_PERSIST);
+    bufferevent_setcb(pair->out, _handle_data_wrapper, NULL, _handle_event_wrapper, this);
+    bufferevent_enable(pair->out, EV_READ | EV_WRITE | EV_PERSIST);
+    // bufferevent_enable(pair->in,  EV_WRITE | EV_PERSIST);
+
+    // needed for evbuffer_reserve_space(), for some reason s-modem does not need this
+    evbuffer_unfreeze(bufferevent_get_input(pair->in), 0);
+
+    // cout << "setup finished " << name << " " << bufferevent_get_input(pair->in)->freeze_end << endl;
+
+
+    // pair->enableLocking();
+
+
 }
 
     BevStream* BevStream::pipe(BevStream* arg) {

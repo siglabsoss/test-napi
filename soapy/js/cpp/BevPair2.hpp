@@ -18,7 +18,7 @@ class BevPair2 {
         bufferevent* out;
         BevPair2();
         BevPair2& set(struct bufferevent * rsps_bev[2]);
-        // BevPair2& enableLocking();
+        BevPair2& enableLocking();
 };
 
 }

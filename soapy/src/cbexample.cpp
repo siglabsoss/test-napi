@@ -21,6 +21,7 @@
 #include <chrono>
 #include <thread>
 #include <iostream>
+#include <unistd.h>
 
 #include "GainStream.hpp"
 
@@ -149,7 +150,6 @@ void CalculateResultsAsync(const v8::FunctionCallbackInfo<v8::Value>&args) {
 
 
     args.GetReturnValue().Set(Undefined(isolate));
-
 }
 
 // void CalculateResultsSync(const v8::FunctionCallbackInfo<v8::Value>&args) {
@@ -189,6 +189,93 @@ void CalculateResultsAsync(const v8::FunctionCallbackInfo<v8::Value>&args) {
 
 
 
+////////////////////
+//
+// My Stream types
+
+BevStream::GainStream* gain1;
+BevStream::GainStream* gain2;
+BevStream::GainStream* gain3;
+
+Local<Function> streamCallback;
+
+void setupStreams() {
+  gain1 = new BevStream::GainStream(false, true);
+  gain2 = new BevStream::GainStream(false, true);
+  gain3 = new BevStream::GainStream(false, true);
+
+  gain1->name = "gain1";
+  gain2->name = "gain2";
+  gain3->name = "gain3";
+
+  gain1->pipe(gain2)->pipe(gain3);
+
+  usleep(1000);
+
+  (void)gain1;
+}
+
+
+void setStreamCallback(const v8::FunctionCallbackInfo<v8::Value>&args) {
+    Isolate* isolate = args.GetIsolate();
+
+    // Work * work = new Work();
+    // work->request.data = work;
+
+    // extract each location (its a list) and store it in the work package
+    // locations is on the heap, accessible in the libuv threads
+    // Local<Array> input = Local<Array>::Cast(args[0]);
+    // unsigned int num_locations = input->Length();
+    // for (unsigned int i = 0; i < num_locations; i++) {
+    //   work->locations.push_back(unpack_location(isolate, Local<Object>::Cast(input->Get(i))));
+    // }
+
+    // for (unsigned int i = 0; i < num_locations; i++) {
+    //   work->locations.push_back(i);
+    // }
+
+
+
+
+
+
+    // store the callback from JS in the work package so we can
+    // invoke it later
+    // streamCallback = Local<Function>::Cast(args[0]);
+    // work->callback.Reset(isolate, callback); // what??
+
+
+
+
+
+
+    // kick off the worker thread
+    // uv_queue_work(uv_default_loop(),&work->request,WorkAsync,WorkAsyncComplete);
+
+    // if we omit is this faster?
+    // args.GetReturnValue().Set(Undefined(isolate));
+}
+
+
+NAN_METHOD(writeStreamData) {
+  // I am very unclear on the difference between this code for info[0]
+  // and code beloe for info[1]
+  // possibly because we want to end up with a Local<Object> in the first case
+  // and a uint32_t in the second
+  MaybeLocal<Object> maybeBufferObj = Nan::To<Object>(info[0]);
+  Local<Object> bufferObj;
+  if (!maybeBufferObj.ToLocal(&bufferObj)) {
+    cout << "Argument 0 Invalid in call to TransformBuffer" << endl;
+    return;
+  }
+
+  uint32_t length = info[1]->Uint32Value(Nan::GetCurrentContext()).ToChecked();
+
+  const char* dataIn = node::Buffer::Data(bufferObj);
+
+  bufferevent_write(gain1->pair->in, dataIn, length);
+
+}
 
 
 ////////////////////
@@ -234,7 +321,9 @@ NAN_METHOD(TransformBuffer)
   // const uint32_t* asintIn = (uint32_t*) dataIn;
 
   char *dataOut = (char*)malloc(length);
-  // uint32_t *asint = (uint32_t*) dataIn;
+  uint32_t *asint = (uint32_t*) dataIn;
+
+  // cout << asint[0] << " " << asint[1] << endl;
 
   for(unsigned i = 0; i < length/4; i++) {
     dataOut[i] = dataIn[i] & 0xf0f0f0f0;
@@ -290,16 +379,13 @@ NAN_MODULE_INIT(Init) {
   NODE_SET_METHOD(target, "runCallback", RunCallback);
   NODE_SET_METHOD(target, "calculate_results_async", CalculateResultsAsync);
   NODE_SET_METHOD(target, "GetBuffer", GetBuffer);
+  NODE_SET_METHOD(target, "setStreamCallback", setStreamCallback);
   // NODE_SET_METHOD(target, "TransformBuffer", TransformBuffer);
   NAN_EXPORT(target, TransformBuffer);
+  NAN_EXPORT(target, writeStreamData);
 
-  auto gain1 = new BevStream::GainStream(true, true);
-  auto gain2 = new BevStream::GainStream(true, true);
-  auto gain3 = new BevStream::GainStream(true, true);
 
-  gain1->pipe(gain2)->pipe(gain3);
-  
-  (void)gain1;
+  setupStreams();
 }
 
 #pragma GCC diagnostic push 
