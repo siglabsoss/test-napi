@@ -86,6 +86,50 @@ function test_transform_buffer() {
 
 
 
+function test_torture() {
+
+  let list = [];
+  for(let i = 0; i < 1024; i++) {
+    list.push(i);
+  }
+
+  let buffer = Buffer.from(IShortToStreamable(list));
+  // console.log(buffer.length);
+  // console.log(buffer.slice(0,12));
+
+  addon.setStreamCallback(function(res) {
+    console.log('stream callback');
+    console.log(res);
+    let uint32_view = new Uint32Array(res.buffer);
+    console.log('uint32 view:');
+    console.log(uint32_view[0].toString(16));
+  });
+
+  let runTorture = 1;
+
+  let torture = function() {
+    for(let i = 0; i < 10000; i++) {
+      addon.writeStreamData(buffer, buffer.length);
+    }
+    if(runTorture) {
+      setImmediate(torture);
+    }
+  };
+
+  torture();
+
+  setTimeout(()=>{ runTorture = 0;  }, 1000*10);
+
+
+  // addon.writeStreamData(buffer, buffer.length);
+  // addon.writeStreamData(buffer, buffer.length);
+  // addon.writeStreamData(buffer, buffer.length);
+  // addon.writeStreamData(buffer, buffer.length);
+}
+
+
+
+
 
 
 
@@ -102,5 +146,6 @@ function test_transform_buffer() {
 // test_callback();
 
 // test_get_buffer();
-test_transform_buffer();
+// test_transform_buffer();
+test_torture();
 // run_bench();

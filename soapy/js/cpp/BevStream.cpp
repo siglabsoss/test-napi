@@ -26,7 +26,7 @@ static void _handle_data_wrapper(struct bufferevent *bev, void *_cls)
 
     cls->gotData(bev,input,len);
     
-    cout << "_handle_data_wrapper" << endl;
+    // cout << "_handle_data_wrapper" << endl;
 }
 
 static void _handle_event_wrapper(bufferevent* bev, short kind, void* v) {

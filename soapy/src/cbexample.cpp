@@ -195,20 +195,23 @@ void CalculateResultsAsync(const v8::FunctionCallbackInfo<v8::Value>&args) {
 
 BevStream::GainStream* gain1;
 BevStream::GainStream* gain2;
+BevStream::GainStream* gain25;
 BevStream::GainStream* gain3;
 
 Local<Function> streamCallback;
 
 void setupStreams() {
-  gain1 = new BevStream::GainStream(true, true);
-  gain2 = new BevStream::GainStream(true, true);
-  gain3 = new BevStream::GainStream(true, true);
+  gain1 = new BevStream::GainStream(true, false);
+  gain2 = new BevStream::GainStream(true, false);
+  gain25= new BevStream::GainStream(true, false);
+  gain3 = new BevStream::GainStream(true, false);
 
   gain1->name = "gain1";
   gain2->name = "gain2";
+  gain25->name = "gain25";
   gain3->name = "gain3";
 
-  gain1->pipe(gain2)->pipe(gain3);
+  gain1->pipe(gain2)->pipe(gain25)->pipe(gain3);
 
   usleep(1000);
 

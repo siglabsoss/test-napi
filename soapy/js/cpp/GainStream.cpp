@@ -25,18 +25,33 @@ void GainStream::setBufferOptions(bufferevent* in, bufferevent* out) {
 
 // runs on _thread
 void GainStream::gotData(struct bufferevent *bev, struct evbuffer *buf, size_t lengthIn) {
-  cout << "Gain got data with " << lengthIn << endl;
+  // cout << "Gain got data with " << lengthIn << endl;
+
+  if(name == "gain3") {
+    static int count = 0;
+    cout << count << endl;
+    count+=(lengthIn/4);
+  }
 
   if(next) {
-    cout << "next: " << next->name << endl;
+    if(_print) {
+      cout << "next: " << next->name << endl;
+    }
   } else {
     evbuffer_drain(buf, lengthIn);
     return;
   }
 
-  unsigned char* temp_read = evbuffer_pullup(buf, 1024*4);
+  size_t this_read = (lengthIn / 4) * 4;
 
-  char* badPractice = (char*)malloc(1024*4);
+  unsigned char* temp_read = evbuffer_pullup(buf, this_read);
+  uint32_t* temp_read_uint = (uint32_t*)temp_read;
+
+  // cout << temp_read[0] << "," << temp_read[1] << "," << temp_read[2] << endl;
+  if(_print) {
+    cout << temp_read_uint[0] << "," << temp_read_uint[1] << "," << temp_read_uint[2] << endl;
+  }
+  // char* badPractice = (char*)malloc(1024*4);
   // bufferevent_write(next->pair->in, badPractice, 1024*4);
 
   // see
@@ -44,52 +59,60 @@ void GainStream::gotData(struct bufferevent *bev, struct evbuffer *buf, size_t l
 
   struct evbuffer_iovec v[2];
   int n, i;
-  size_t n_to_add = 1024*4*2;
+  size_t n_to_add = this_read;
+  size_t in_index = 0;
+  size_t j;
 
-// #define DDD next->input
-#define DDD bufferevent_get_output(next->pair->in) 
+  // If we can avoid a buffer copy, we use the evbuffer_reserve_space()
+  // this returns 1 or 2 buffers (called extents) which may be shorter
+  // or longer individually but will always total to more data than
+  // we asked for
+  // the outer loop is over these extents
 
   // Reserve bytes
-  n = evbuffer_reserve_space(DDD, n_to_add, v, 2);
+  n = evbuffer_reserve_space(next->input2, n_to_add, v, 2);
   if (n<=0) {
     cout << "fatal in GainStream::evbuffer_reserve_space "<< n << endl;
     return; /* Unable to reserve the space for some reason. */
   }
 
-  cout << "iovec had " << n << " extents" << endl;
+  // cout << "iovec had " << n << " extents" << endl;
 
+  // for each extent 
   for (i=0; i<n && n_to_add > 0; ++i) {
     size_t len = v[i].iov_len;
-    cout << "iovec v had len " << len << endl;
-    if (len > n_to_add) /* Don't write more than n_to_add bytes. */
+    if (len > n_to_add) { // Don't write more than n_to_add bytes.
        len = n_to_add;
-
-       ((char*)v[i].iov_base)[0] =0xff;
-       ((char*)v[i].iov_base)[1] =0x0f;
-       ((char*)v[i].iov_base)[2] =0x03;
-       ((char*)v[i].iov_base)[4] =0x04;
-
-    if (
-      false
-      // generate_data(v[i].iov_base, len) < 0
-      ) {
-       /* If there was a problem during data generation, we can just stop
-          here; no data will be committed to the buffer. */
-       return;
     }
+    // cout << "iovec v had len " << len << " (" << n_to_add << ")" << endl;
+
+    char* asChar = (char*)v[i].iov_base;
+    uint32_t* asUint = (uint32_t*)v[i].iov_base;
+    // asChar[0] = 'a';
+    // write until we hit the end of this extent
+
+    // for(j=0;j<len;++j) {
+    //   asChar[j] = temp_read[in_index];
+    //   ++in_index;
+    // }
+
+    for(j=0;j<len/4;++j) {
+      asUint[j] = temp_read_uint[in_index] * this->gain;
+      ++in_index;
+    }
+
+
     /* Set iov_len to the number of bytes we actually wrote, so we
        don't commit too much. */
-     v[i].iov_len = len;
+     v[i].iov_len = (len/4)*4;
      // v[i].iov_len = 1024*4;
-
-
 
   }
 
   /* We commit the space here.  Note that we give it 'i' (the number of
      vectors we actually used) rather than 'n' (the number of vectors we
      had available. */
-  if (evbuffer_commit_space(DDD, v, i) < 0) {
+  if (evbuffer_commit_space(next->input2, v, i) < 0) {
     cout << "fatal in GainStream::evbuffer_commit_space" << endl;
     return; /* Error committing */
   }

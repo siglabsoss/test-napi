@@ -14,6 +14,7 @@ public:
   void setBufferOptions(bufferevent* in, bufferevent* out);
   void gotData(struct bufferevent *bev, struct evbuffer *buf, size_t len);
 
+  uint32_t gain = 2;
 
 };
 
