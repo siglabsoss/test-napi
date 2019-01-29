@@ -160,8 +160,11 @@ void BevStream::setupBuffers() {
 
     bufferevent_setcb(bev->out, _handle_udp_callback, NULL, _handle_udp_event, this);
     bufferevent_enable(bev->out, EV_READ | EV_WRITE | EV_PERSIST);
-
 }
+
+    BevStream& BevStream::pipe(BevStream& arg) {
+        return arg;
+    }
 
 
 }

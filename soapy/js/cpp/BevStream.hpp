@@ -17,6 +17,9 @@ class BevStream {
 public:
     BevStream(bool defer_callbacks, bool print);
 
+    BevStream* next = 0;
+    BevStream* prev = 0;
+
     bool _print;
     bool _defer_callbacks;
 
@@ -47,6 +50,8 @@ public:
     virtual void gotData(struct bufferevent *bev, struct evbuffer *buf, size_t len) = 0;
 
     void init(); // finishes buffer alloc, gets derived buffer settins, fires thread
+
+    BevStream& pipe(BevStream& rhs);
 };
 
 }
