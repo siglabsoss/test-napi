@@ -214,6 +214,7 @@ void GetBuffer(const FunctionCallbackInfo<Value>& args) {
 // https://github.com/nodejs/nan/issues/749
 // https://github.com/bcoin-org/bcrypto/issues/7
 // https://github.com/nodejs/nan/blob/master/doc/new.md
+// https://github.com/nodejs/nan/blob/master/doc/maybe_types.md
 NAN_METHOD(TransformBuffer)
 {
   // I am very unclear on the difference between this code for info[0]
@@ -293,7 +294,11 @@ NAN_MODULE_INIT(Init) {
   NAN_EXPORT(target, TransformBuffer);
 
   auto gain1 = new BevStream::GainStream(true, true);
-  gain1->init();
+  auto gain2 = new BevStream::GainStream(true, true);
+  auto gain3 = new BevStream::GainStream(true, true);
+
+  gain1->pipe(gain2)->pipe(gain3);
+  
   (void)gain1;
 }
 

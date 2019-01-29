@@ -63,9 +63,11 @@ static void _handle_udp_event(bufferevent* d, short kind, void* v) {
 
 
 BevStream::BevStream(bool defer_callbacks, bool print):
-    _print(print),
-    _defer_callbacks(defer_callbacks),
-    _thread_should_terminate(false) {
+    _print(print)
+    ,_defer_callbacks(defer_callbacks)
+    ,_thread_should_terminate(false)
+    ,_init_run(false) 
+                      {
 
     if(_print) {
         cout << "BevStream() ctons" << endl;
@@ -80,12 +82,17 @@ BevStream::BevStream(bool defer_callbacks, bool print):
     evbase = event_base_new();
 }
 
+// init the function, this is called from pipe
+// this can be called as many times as needed, it will only run once
 void BevStream::init() {
-    setupBuffers();
+    if( !_init_run ) {
+        setupBuffers();
 
+        _init_run = true;
 
-    // pass this
-    _thread = std::thread(&BevStream::threadMain, this);    
+        // pass this
+        _thread = std::thread(&BevStream::threadMain, this);
+    }
 }
 
 void BevStream::threadMain() {
@@ -162,7 +169,13 @@ void BevStream::setupBuffers() {
     bufferevent_enable(bev->out, EV_READ | EV_WRITE | EV_PERSIST);
 }
 
-    BevStream& BevStream::pipe(BevStream& arg) {
+    BevStream* BevStream::pipe(BevStream* arg) {
+        next = arg;
+        arg->prev = this;
+
+        this->init();
+        this->next->init();
+
         return arg;
     }
 

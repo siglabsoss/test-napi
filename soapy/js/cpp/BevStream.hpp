@@ -29,6 +29,8 @@ public:
 
     void threadMain();
 
+    void init();
+
 
     // struct event *_example_event;
 
@@ -41,6 +43,8 @@ public:
 
     std::atomic<bool> _thread_should_terminate; // set by outside
     
+    std::atomic<bool> _init_run; // not sure if atomic needed but who cares
+
     // thread and ev base stuff above
     // buffer and pipe stuff below
     BevPair2* bev = 0;
@@ -49,9 +53,9 @@ public:
     virtual void setBufferOptions(bufferevent* in, bufferevent* out) = 0;
     virtual void gotData(struct bufferevent *bev, struct evbuffer *buf, size_t len) = 0;
 
-    void init(); // finishes buffer alloc, gets derived buffer settins, fires thread
+    // void init(); // finishes buffer alloc, gets derived buffer settins, fires thread
 
-    BevStream& pipe(BevStream& rhs);
+    BevStream* pipe(BevStream* arg);
 };
 
 }
