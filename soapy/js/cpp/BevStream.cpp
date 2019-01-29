@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <iostream>
 #include <unistd.h>
+#include <cassert>
 
 namespace BevStream {
 
@@ -40,13 +41,35 @@ using namespace std;
 
 /////////////////////////////
 
+static void _handle_udp_callback(struct bufferevent *bev, void *_dsp)
+{
+    BevStream *dsp = reinterpret_cast<BevStream*>(_dsp);
+    (void)dsp;
+
+    // struct evbuffer *input = bufferevent_get_input(bev);
+    // dsp->parseFeedbackBuffer(input, dsp);
+}
+
+static void _handle_udp_event(bufferevent* d, short kind, void* v) {
+     cout << "_handle_udp_event" << endl;
+}
 
 
 
-BevStream::BevStream():_thread_should_terminate(false) {
 
 
-    cout << "BevStream() ctons" << endl;
+/////////////////////////////
+
+
+
+BevStream::BevStream(bool defer_callbacks, bool print):
+    _print(print),
+    _defer_callbacks(defer_callbacks),
+    _thread_should_terminate(false) {
+
+    if(_print) {
+        cout << "BevStream() ctons" << endl;
+    }
     
     evthread_use_pthreads();
     // construct here or in thread?
@@ -55,16 +78,14 @@ BevStream::BevStream():_thread_should_terminate(false) {
     // event_enable_debug_mode();
 
     evbase = event_base_new();
+}
 
+void BevStream::init() {
+    setupBuffers();
 
-    // // Example event
-    // if( run_timer ) {
-    //     _example_event = evtimer_new(evbase, _example_clock_event, this);
-    //     _example_clock_event(-1, EV_TIMEOUT, this);
-    // }
 
     // pass this
-    _thread = std::thread(&BevStream::threadMain, this);
+    _thread = std::thread(&BevStream::threadMain, this);    
 }
 
 void BevStream::threadMain() {
@@ -75,7 +96,7 @@ void BevStream::threadMain() {
 
     // dsp_evbase = event_base_new();
 
-    printf("event dispatch thread running\n");
+    cout << "event dispatch thread running" << endl;
 
     auto retval = event_base_loop(evbase, EVLOOP_NO_EXIT_ON_EMPTY);
 
@@ -85,22 +106,7 @@ void BevStream::threadMain() {
     cout << "!!!!!!!!!!!!!!!!! BevStream::threadMain() exiting " << endl;
     
 
-    printf("event_base_dispatch: %i\n", retval);
-
-
-    // return NULL;
-
-    // std::cout << "printRbThread()" << std::endl;
-    //higgsRunRbPrintThread
-    // while(higgsRunRbPrintThread) {
-    //         uint32_t data, rb_error;
-    //         rb->get(data, rb_error);
-    //         if( rb_error == 0 ) {
-    //             rb_buffer.enqueue(data);
-    //             std::cout << "Ringbus: 0x" << HEX32_STRING(data) << std::endl;
-    //         }
-
-    // }
+    cout << "event_base_dispatch: " << retval << endl;
 
     std::cout << "BevStream::threadMain() closing" << std::endl;
 }
@@ -111,6 +117,51 @@ void BevStream::stopThread() {
     stopThreadDerivedClass();
 }
 
+
+
+///
+/// Setup of callbacks and buffer waterlevels
+///
+void BevStream::setupBuffers() {
+    // bufferevent_options(udp_payload_in_bev, BE_VOPT_THREADSAFE);
+
+
+    // shared set of pointers that we overwrite and then copy out from
+    // (copied to BevPair class)
+    struct bufferevent * rsps_bev[2];
+
+
+    ////////////////////
+    //
+    // raw udp buffer
+    //
+    // could be replaced by reading fid directly
+    // fixme
+    //
+    // This buffer is cross threads while the others do not
+    // this allows us to have an entire thread dedicated to rx
+    int flags = BEV_OPT_CLOSE_ON_FREE | BEV_OPT_THREADSAFE;
+
+    if( _defer_callbacks ) {
+        flags |= BEV_OPT_DEFER_CALLBACKS;
+    }
+
+    int ret = bufferevent_pair_new(evbase, 
+        flags, 
+        rsps_bev);
+    assert(ret>=0);
+
+    bev = new BevPair2();
+    bev->set(rsps_bev);
+
+    setBufferOptions(bev->in, bev->out); // this will take care of this:
+    // bufferevent_setwatermark(bev->out, EV_READ, (1024+16)*4, 0);
+    // bufferevent_set_max_single_read(bev->out, (1024+16)*4 );
+
+    bufferevent_setcb(bev->out, _handle_udp_callback, NULL, _handle_udp_event, this);
+    bufferevent_enable(bev->out, EV_READ | EV_WRITE | EV_PERSIST);
+
+}
 
 
 }

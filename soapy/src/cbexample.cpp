@@ -22,7 +22,7 @@
 #include <thread>
 #include <iostream>
 
-#include "BevPair2.hpp"
+#include "GainStream.hpp"
 
 namespace demo {
 
@@ -292,8 +292,9 @@ NAN_MODULE_INIT(Init) {
   // NODE_SET_METHOD(target, "TransformBuffer", TransformBuffer);
   NAN_EXPORT(target, TransformBuffer);
 
-  auto udp_payload_bev = new BevStream::BevPair2();
-  (void)udp_payload_bev;
+  auto gain1 = new BevStream::GainStream(true, true);
+  gain1->init();
+  (void)gain1;
 }
 
 #pragma GCC diagnostic push 

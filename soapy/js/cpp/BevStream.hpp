@@ -15,7 +15,10 @@ namespace BevStream {
 
 class BevStream {
 public:
-    BevStream();
+    BevStream(bool defer_callbacks, bool print);
+
+    bool _print;
+    bool _defer_callbacks;
 
     struct event_base *evbase;
     void stopThread();
@@ -23,7 +26,8 @@ public:
 
     void threadMain();
 
-    struct event *_example_event;
+
+    // struct event *_example_event;
 
     std::thread _thread;
 
@@ -34,6 +38,15 @@ public:
 
     std::atomic<bool> _thread_should_terminate; // set by outside
     
+    // thread and ev base stuff above
+    // buffer and pipe stuff below
+    BevPair2* bev = 0;
+    void setupBuffers();
+
+    virtual void setBufferOptions(bufferevent* in, bufferevent* out) = 0;
+    virtual void gotData(struct bufferevent *bev, struct evbuffer *buf, size_t len) = 0;
+
+    void init(); // finishes buffer alloc, gets derived buffer settins, fires thread
 };
 
 }
