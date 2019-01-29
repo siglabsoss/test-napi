@@ -32,7 +32,7 @@ function test_callback() {
 }
 
 
-function test_buffer() {
+function test_get_buffer() {
   let res = addon.GetBuffer();
 
   // this.thebuffer = new ArrayBuffer(this.chunk*8*2); // in bytes
@@ -48,6 +48,36 @@ function test_buffer() {
   // console.log(kindOf(res));
 }
 
+function test_transform_buffer() {
+
+  let buffer = Buffer.alloc(1024*4);
+  // buffer[0] = 'a';
+  // buffer[1] = 'b';
+  // buffer[2] = 'c';
+  // buffer[3] = 'd';
+  // buffer[4] = 0;
+  // buffer[5] = 0;
+  // buffer[6] = 0;
+  // buffer[7] = 0;
+  buffer.write("AbCdadklfjasfasdflkjasdflkasdjf,xnclx423423423lkaslaksfasf,mnasd");
+
+  console.log(buffer.length);
+
+  // console.log(buffer.slice(0,8));
+
+  let res = addon.TransformBuffer(buffer, buffer.length);
+
+  console.log(res.slice(0,8));
+
+  uint32_view = new Uint32Array(res.buffer);
+
+
+  console.log("uint32 view:");
+  console.log(uint32_view[0].toString(16));
+  // console.log(uint32_view[1]);
+}
+
+
 
 function run_bench() {
 
@@ -57,19 +87,28 @@ function run_bench() {
 // }, {'defer': true});
 
 
-// add tests
-suite.add('Get 1024 Buffer', function() {
-  let res = addon.GetBuffer();
-})
-// add listeners
-.on('cycle', function(event) {
-  console.log(String(event.target));
-})
-.on('complete', function() {
-  console.log('Fastest is ' + this.filter('fastest').map('name'));
-})
-// run async
-.run({ 'async': true });
+  let tranformBuffer = Buffer.alloc(1024*4);
+  tranformBuffer.write("abcdadklfjasfasdflkjasdflkasdjf,xnclx423423423lkaslaksfasf,mnasd");
+
+
+
+  // add tests
+  suite.add('Get 1024 uint Buffer', function() {
+    let res = addon.GetBuffer();
+  })
+  .add('Transform 1024 uint Buffer', function() {
+    let res = addon.TransformBuffer(tranformBuffer, tranformBuffer.length);
+  })
+
+  // add listeners
+  .on('cycle', function(event) {
+    console.log(String(event.target));
+  })
+  .on('complete', function() {
+    console.log('Fastest is ' + this.filter('fastest').map('name'));
+  })
+  // run async
+  .run({ 'async': true });
 
 }
  
@@ -91,5 +130,6 @@ suite.add('Get 1024 Buffer', function() {
 // test_async();
 // test_callback();
 
-// test_buffer();
-run_bench();
+// test_get_buffer();
+test_transform_buffer();
+// run_bench();

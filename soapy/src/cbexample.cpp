@@ -29,6 +29,7 @@ using v8::Value;
 using namespace v8;
 
 using namespace std;
+// using namespace Nan;
 
 /////////////////////////////////
 //
@@ -186,9 +187,9 @@ void CalculateResultsAsync(const v8::FunctionCallbackInfo<v8::Value>&args) {
 // NAN buffer
 
 void GetBuffer(const FunctionCallbackInfo<Value>& args) {
-  char *data = (char*)malloc(1024*4);
+  char *dataIn = (char*)malloc(1024*4);
   size_t length = 1024*4;
-  uint32_t *asint = (uint32_t*) data;
+  uint32_t *asint = (uint32_t*) dataIn;
 
   for(auto i = 0; i < 1024; i++) {
     asint[i] = 0;
@@ -197,12 +198,42 @@ void GetBuffer(const FunctionCallbackInfo<Value>& args) {
   asint[0] = 0xdeadbeef;
   
 
-
-
-  MaybeLocal<Object> buffer = Nan::NewBuffer(data, length);
+  MaybeLocal<Object> buffer = Nan::NewBuffer(dataIn, length);
   args.GetReturnValue().Set(buffer.ToLocalChecked());
 }
 
+// void TransformBuffer(const FunctionCallbackInfo<Value>& info)
+NAN_METHOD(TransformBuffer)
+{
+    Local<Object> bufferObj = info[0]->ToObject();
+    const unsigned int length = info[1]->Uint32Value();
+    const char* dataIn = node::Buffer::Data(bufferObj);
+    const uint32_t* asintIn = (uint32_t*) dataIn;
+
+    char *dataOut = (char*)malloc(length);
+    uint32_t *asint = (uint32_t*) dataIn;
+
+    for(auto i = 0; i < length/4; i++) {
+      dataOut[i] = dataIn[i] & 0xf0f0f0f0;
+    }
+
+    MaybeLocal<Object> buffer = Nan::NewBuffer(dataOut, length);
+    info.GetReturnValue().Set(buffer.ToLocalChecked());
+
+    // char* msg = Nan::Buffer::Data(bufferObj);
+
+    // cout << msg[0] << msg[1] << endl;
+ 
+    // info.GetReturnValue().Set(Nan::New<String>(msg, len).ToLocalChecked());
+    // You can not use strlen(msg). Because it is a binary not a string. The end of  string is a null byte and  the end of binary data is not null.
+    
+    // auto ptr = (char*) bufferObj->GetIndexedPropertiesExternalArrayData();
+    // cout << ptr << endl;
+
+    // auto ptr = bufferObj->GetContents().Data();
+
+
+}
 
 
 
@@ -225,10 +256,13 @@ void RunCallback(const FunctionCallbackInfo<Value>& args) {
   cb->Call(context, Null(isolate), argc, argv).ToLocalChecked();
 }
 
-void Init(Local<Object> exports, Local<Object> module) {
-  NODE_SET_METHOD(exports, "runCallback", RunCallback);
-  NODE_SET_METHOD(exports, "calculate_results_async", CalculateResultsAsync);
-  NODE_SET_METHOD(exports, "GetBuffer", GetBuffer);
+// void Init(Local<Object> exports, Local<Object> module) {
+NAN_MODULE_INIT(Init) {
+  NODE_SET_METHOD(target, "runCallback", RunCallback);
+  NODE_SET_METHOD(target, "calculate_results_async", CalculateResultsAsync);
+  NODE_SET_METHOD(target, "GetBuffer", GetBuffer);
+  // NODE_SET_METHOD(target, "TransformBuffer", TransformBuffer);
+  NAN_EXPORT(target, TransformBuffer);
 }
 
 NODE_MODULE(NODE_GYP_MODULE_NAME, Init)
