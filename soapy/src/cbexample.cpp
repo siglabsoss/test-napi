@@ -200,9 +200,9 @@ BevStream::GainStream* gain3;
 Local<Function> streamCallback;
 
 void setupStreams() {
-  gain1 = new BevStream::GainStream(false, true);
-  gain2 = new BevStream::GainStream(false, true);
-  gain3 = new BevStream::GainStream(false, true);
+  gain1 = new BevStream::GainStream(true, true);
+  gain2 = new BevStream::GainStream(true, true);
+  gain3 = new BevStream::GainStream(true, true);
 
   gain1->name = "gain1";
   gain2->name = "gain2";

@@ -142,6 +142,7 @@ void BevStream::setupBuffers() {
 
     // copy to member
     input  = bufferevent_get_input(pair->in);
+    input2 = bufferevent_get_output(pair->in);
 
     setBufferOptions(pair->in, pair->out); // this will take care of this:
     // bufferevent_setwatermark(bev->out, EV_READ, (1024+16)*4, 0);
@@ -152,7 +153,10 @@ void BevStream::setupBuffers() {
     // bufferevent_enable(pair->in,  EV_WRITE | EV_PERSIST);
 
     // needed for evbuffer_reserve_space(), for some reason s-modem does not need this
-    evbuffer_unfreeze(bufferevent_get_input(pair->in), 0);
+    evbuffer_unfreeze(bufferevent_get_input(pair->in), 0); // works
+
+
+
 
     // cout << "setup finished " << name << " " << bufferevent_get_input(pair->in)->freeze_end << endl;
 

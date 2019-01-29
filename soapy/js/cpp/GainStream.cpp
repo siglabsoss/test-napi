@@ -29,19 +29,28 @@ void GainStream::gotData(struct bufferevent *bev, struct evbuffer *buf, size_t l
 
   if(next) {
     cout << "next: " << next->name << endl;
+  } else {
+    evbuffer_drain(buf, lengthIn);
+    return;
   }
 
   unsigned char* temp_read = evbuffer_pullup(buf, 1024*4);
+
+  char* badPractice = (char*)malloc(1024*4);
+  // bufferevent_write(next->pair->in, badPractice, 1024*4);
 
   // see
   // http://www.wangafu.net/~nickm/libevent-book/Ref7_evbuffer.html
 
   struct evbuffer_iovec v[2];
   int n, i;
-  size_t n_to_add = 1024*4;
+  size_t n_to_add = 1024*4*2;
+
+// #define DDD next->input
+#define DDD bufferevent_get_output(next->pair->in) 
 
   // Reserve bytes
-  n = evbuffer_reserve_space(next->input, n_to_add, v, 2);
+  n = evbuffer_reserve_space(DDD, n_to_add, v, 2);
   if (n<=0) {
     cout << "fatal in GainStream::evbuffer_reserve_space "<< n << endl;
     return; /* Unable to reserve the space for some reason. */
@@ -70,8 +79,8 @@ void GainStream::gotData(struct bufferevent *bev, struct evbuffer *buf, size_t l
     }
     /* Set iov_len to the number of bytes we actually wrote, so we
        don't commit too much. */
-     // v[i].iov_len = len;
-     v[i].iov_len = 2048;
+     v[i].iov_len = len;
+     // v[i].iov_len = 1024*4;
 
 
 
@@ -80,10 +89,22 @@ void GainStream::gotData(struct bufferevent *bev, struct evbuffer *buf, size_t l
   /* We commit the space here.  Note that we give it 'i' (the number of
      vectors we actually used) rather than 'n' (the number of vectors we
      had available. */
-  if (evbuffer_commit_space(next->input, v, i) < 0) {
+  if (evbuffer_commit_space(DDD, v, i) < 0) {
     cout << "fatal in GainStream::evbuffer_commit_space" << endl;
     return; /* Error committing */
   }
+
+  evbuffer_drain(buf, n_to_add);
+
+  // evbuffer_invoke_callbacks_(next->input);
+
+    // if(name == "gain1") {
+    // static int times = 0;
+    // if( times < 2 ) {
+    // times++;
+    // bufferevent_write(next->pair->in, badPractice, 4*1024);
+    // }
+    // }
 
 }
 

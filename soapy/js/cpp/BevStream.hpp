@@ -55,6 +55,7 @@ public:
 
     // this points inside pair, but makes writing code easier
     struct evbuffer *input = 0;
+    struct evbuffer *input2 = 0;
 
     virtual void setBufferOptions(bufferevent* in, bufferevent* out) = 0;
     virtual void gotData(struct bufferevent *bev, struct evbuffer *input, size_t len) = 0;
