@@ -40,6 +40,7 @@
       ,'sources':[
       '../src/cbexample.cpp'
       ,'cpp/BevPair2.cpp'
+      ,'cpp/BevPipe.cpp'
       ]
 
       ,'include_dirs': [

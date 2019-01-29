@@ -213,6 +213,7 @@ void GetBuffer(const FunctionCallbackInfo<Value>& args) {
 
 // https://github.com/nodejs/nan/issues/749
 // https://github.com/bcoin-org/bcrypto/issues/7
+// https://github.com/nodejs/nan/blob/master/doc/new.md
 NAN_METHOD(TransformBuffer)
 {
   // I am very unclear on the difference between this code for info[0]

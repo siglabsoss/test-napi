@@ -9,11 +9,11 @@
 #include <event2/bufferevent.h>
 
 
+namespace BevPipe {
 
-
-class HiggsEvent {
+class BevPipe {
 public:
-    HiggsEvent(HiggsDriver*, bool _run_timer = false);
+    BevPipe();
 
     struct event_base *evbase;
     int stopThread();
@@ -28,9 +28,10 @@ public:
 
     // std::atomic<bool> _thread_can_terminate = false; // set by inside when ready??
 
-    HiggsDriver* soapy;
+    // HiggsDriver* soapy;
 
     std::atomic<bool> _thread_should_terminate; // set by outside
     
-    bool run_timer;
 };
+
+}
