@@ -34,24 +34,53 @@ void ToJs::setBufferOptions(bufferevent* in, bufferevent* out) {
 
 // runs on _thread
 void ToJs::gotData(struct bufferevent *bev, struct evbuffer *buf, size_t lengthIn) {
-  // cout << "Gain got data with " << lengthIn << endl;
+  cout << name << " got data with " << lengthIn << endl;
 
-  if(next) {
-    // cout <
-  } else {
-    evbuffer_drain(buf, lengthIn);
+
+  const size_t this_read = (lengthIn / 4) * 4;
+
+  void* ptr = malloc(this_read);
+
+  if( ptr == 0 ) {
+    cout << "fatal malloc returned 0" << endl;
     return;
   }
 
-  size_t this_read = (lengthIn / 4) * 4;
+  // unsigned char* temp_read = evbuffer_pullup(buf, this_read);
+  // uint32_t* temp_read_uint = (uint32_t*)temp_read;
 
-  unsigned char* temp_read = evbuffer_pullup(buf, this_read);
-  uint32_t* temp_read_uint = (uint32_t*)temp_read;
+  // http://www.wangafu.net/~nickm/libevent-book/Ref7_evbuffer.html:
+
+  // The evbuffer_remove() function copies and removes the first datlen bytes from the front 
+  // of buf into the memory at data. If there are fewer than datlen bytes available, the function
+  // copies all the bytes there are. The return value is -1 on failure, and is otherwise the number
+  // of bytes copied.
+
+  int res = evbuffer_remove(buf, ptr, this_read);
+
+  if( res != this_read ) {
+    cout << "fatal evbuffer_remove() didn't write everything" << endl;
+    return;
+  }
+
+  if( res < 0 ) {
+    cout << "fatal in evbuffer_remove()" << endl;
+    return;
+  }
+
+  {
+    std::lock_guard<std::mutex> lk(*this->mutfruit);
+    *(this->outputReady) = true;
+    this->outputPointers->push_back((tojs_t){0,NULL});
+    if(_print) {
+      std::cout << "ToJs signals data ready for processing" << endl;;
+    }
+  }
 
   // cout << temp_read[0] << "," << temp_read[1] << "," << temp_read[2] << endl;
-  if(_print) {
-    cout << temp_read_uint[0] << "," << temp_read_uint[1] << "," << temp_read_uint[2] << endl;
-  }
+  // if(_print) {
+  //   cout << temp_read_uint[0] << "," << temp_read_uint[1] << "," << temp_read_uint[2] << endl;
+  // }
   // char* badPractice = (char*)malloc(1024*4);
   // bufferevent_write(next->pair->in, badPractice, 1024*4);
 

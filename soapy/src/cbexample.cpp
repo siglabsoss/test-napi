@@ -81,90 +81,6 @@ void pack_rain_result(v8::Isolate* isolate, v8::Local<v8::Object> & target, uint
 
 
 
-// called by libuv worker in separate thread
-// BLOCK AT WILL
-static void workAsync2(uv_work_t *req)
-{
-    Work2 *work = static_cast<Work2 *>(req->data); // grab the pointer to the object
-
-
-    // this is the worker thread, lets build up the results
-    // allocated results from the heap because we'll need
-    // to access in the event loop later to send back
-    // work->results.resize(work->locations.size());
-    // std::transform(work->locations.begin(), work->locations.end(), work->results.begin(), calc_rain_stats);
-
-    // as soon as we return, the other callback will fire
-
-    // static int times = 0;
-
-    // times++;
-
-
-    // that wasn't really that long of an operation, so lets pretend it took longer...
-    // std::this_thread::sleep_for(chrono::seconds(3));
-}
-
-// called by libuv in event loop when async function completes
-// DO NOT BLOCK
-static void workAsyncComplete2(uv_work_t *req, int status)
-{
-    Isolate * isolate = Isolate::GetCurrent();
-
-    // Fix for Node 4.x - thanks to https://github.com/nwjs/blink/commit/ecda32d117aca108c44f38c8eb2cb2d0810dfdeb
-    v8::HandleScope handleScope(isolate);
-
-    Work2 *work = static_cast<Work2 *>(req->data);
-
-    // the work has been done, and now we pack the results
-    // vector into a Local array on the event-thread's stack.
-    // Local<Array> result_list = Array::New(isolate);
-    // for (unsigned int i = 0; i < work->results.size(); i++ ) {
-    //   Local<Object> result = Object::New(isolate);
-    //   pack_rain_result(isolate, result, work->results[i]);
-    //   result_list->Set(i, result);
-    // }
-
-    char *dataIn = (char*)malloc(1024*4);
-    size_t length = 1024*4;
-    uint32_t *asint = (uint32_t*) dataIn;
-
-    for(auto i = 0; i < 1024; i++) {
-      asint[i] = 0;
-    }
-
-    asint[0] = 0xdeadbeef;
-    
-
-    MaybeLocal<Object> buffer = Nan::NewBuffer(dataIn, length);
-    // args.GetReturnValue().Set(buffer.ToLocalChecked());
-
-
-    // set up return arguments
-    // Handle<Value> argv[] = { result_list };
-    Handle<Value> argv[] = { buffer.ToLocalChecked() };
-
-    // execute the callback
-    // https://stackoverflow.com/questions/13826803/calling-javascript-function-from-a-c-callback-in-v8/28554065#28554065
-    Local<Function>::New(isolate, work->callback)->Call(isolate->GetCurrentContext()->Global(), 1, argv);
-
-
-    static int times = 0;
-
-    times++;
-
-    if( times < 3 ) {
-      uv_queue_work(uv_default_loop(),&work->request,workAsync2,workAsyncComplete2);
-    }
-
-    // Free up the persistent function callback
-    // work->callback.Reset();
-    // delete work;
-
-}
-
-
-
 
 
 
@@ -249,40 +165,6 @@ void CalculateResultsAsync(const v8::FunctionCallbackInfo<v8::Value>&args) {
     args.GetReturnValue().Set(Undefined(isolate));
 }
 
-// void CalculateResultsSync(const v8::FunctionCallbackInfo<v8::Value>&args) {
-//     Isolate* isolate = args.GetIsolate();
-//     std::vector<location> locations;
-//     std::vector<rain_result> results;
-    
-//     // extract each location (its a list)
-//     Local<Array> input = Local<Array>::Cast(args[0]);
-//     unsigned int num_locations = input->Length();
-//     for (unsigned int i = 0; i < num_locations; i++) {
-//       locations.push_back(unpack_location(isolate, Local<Object>::Cast(input->Get(i))));
-//     }
-
-//     // Build vector of rain_results
-//     results.resize(locations.size());
-//     std::transform(locations.begin(), locations.end(), results.begin(), calc_rain_stats);
-
-
-//     // Convert the rain_results into Objects for return
-//     Local<Array> result_list = Array::New(isolate);
-//     for (unsigned int i = 0; i < results.size(); i++ ) {
-//       Local<Object> result = Object::New(isolate);
-//       pack_rain_result(isolate, result, results[i]);
-//       result_list->Set(i, result);
-//     }
-
-
-//     Local<Function> callback = Local<Function>::Cast(args[1]);
-//     Handle<Value> argv[] = { result_list };
-//     callback->Call(isolate->GetCurrentContext()->Global(), 1, argv);
-        
-//     std::cerr << "Returning from C++ now" << std::endl;
-    
-//     args.GetReturnValue().Set(Undefined(isolate));
-// }
 
 
 
@@ -301,6 +183,93 @@ std::condition_variable streamOutputReadyCondition;
 std::mutex mutfruit;
 bool outputReady;
 std::vector<BevStream::tojs_t> toJsPointers;
+
+
+
+
+// called by libuv worker in separate thread
+// BLOCK AT WILL
+static void workAsync2(uv_work_t *req)
+{
+    Work2 *work = static_cast<Work2 *>(req->data); // grab the pointer to the object
+
+
+    // this is the worker thread, lets build up the results
+    // allocated results from the heap because we'll need
+    // to access in the event loop later to send back
+    // work->results.resize(work->locations.size());
+    // std::transform(work->locations.begin(), work->locations.end(), work->results.begin(), calc_rain_stats);
+
+    // as soon as we return, the other callback will fire
+
+    // static int times = 0;
+
+    // times++;
+
+
+    // that wasn't really that long of an operation, so lets pretend it took longer...
+    // std::this_thread::sleep_for(chrono::seconds(3));
+}
+
+// called by libuv in event loop when async function completes
+// DO NOT BLOCK
+static void workAsyncComplete2(uv_work_t *req, int status)
+{
+    Isolate * isolate = Isolate::GetCurrent();
+
+    // Fix for Node 4.x - thanks to https://github.com/nwjs/blink/commit/ecda32d117aca108c44f38c8eb2cb2d0810dfdeb
+    v8::HandleScope handleScope(isolate);
+
+    Work2 *work = static_cast<Work2 *>(req->data);
+
+    // the work has been done, and now we pack the results
+    // vector into a Local array on the event-thread's stack.
+    // Local<Array> result_list = Array::New(isolate);
+    // for (unsigned int i = 0; i < work->results.size(); i++ ) {
+    //   Local<Object> result = Object::New(isolate);
+    //   pack_rain_result(isolate, result, work->results[i]);
+    //   result_list->Set(i, result);
+    // }
+
+    char *dataIn = (char*)malloc(1024*4);
+    size_t length = 1024*4;
+    uint32_t *asint = (uint32_t*) dataIn;
+
+    for(auto i = 0; i < 1024; i++) {
+      asint[i] = 0;
+    }
+
+    asint[0] = 0xdeadbeef;
+    
+
+    MaybeLocal<Object> buffer = Nan::NewBuffer(dataIn, length);
+    // args.GetReturnValue().Set(buffer.ToLocalChecked());
+
+
+    // set up return arguments
+    // Handle<Value> argv[] = { result_list };
+    Handle<Value> argv[] = { buffer.ToLocalChecked() };
+
+    // execute the callback
+    // https://stackoverflow.com/questions/13826803/calling-javascript-function-from-a-c-callback-in-v8/28554065#28554065
+    Local<Function>::New(isolate, work->callback)->Call(isolate->GetCurrentContext()->Global(), 1, argv);
+
+
+    static int times = 0;
+
+    times++;
+
+    if( times < 3 ) {
+      uv_queue_work(uv_default_loop(),&work->request,workAsync2,workAsyncComplete2);
+    }
+
+    // Free up the persistent function callback
+    // work->callback.Reset();
+    // delete work;
+
+}
+
+
 
 
 void setupStreams() {
