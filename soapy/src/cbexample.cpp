@@ -193,6 +193,16 @@ static void workAsync2(uv_work_t *req)
 {
     Work2 *work = static_cast<Work2 *>(req->data); // grab the pointer to the object
 
+    cout << "before condition" << endl;
+    std::unique_lock<std::mutex> lk(mutfruit);
+    streamOutputReadyCondition.wait(lk, []{return outputReady;});
+    // after wait, we own the lock
+    cout << "after condition with " << toJsPointers.size() << endl;
+
+
+
+
+
 
     // this is the worker thread, lets build up the results
     // allocated results from the heap because we'll need
@@ -281,7 +291,7 @@ void setupStreams() {
   gain25= new BevStream::GainStream(true, false);
   gain3 = new BevStream::GainStream(true, false);
 
-  toJs = new BevStream::ToJs(true, false, &mutfruit, &streamOutputReadyCondition, &outputReady, &toJsPointers);
+  toJs = new BevStream::ToJs(true, true, &mutfruit, &streamOutputReadyCondition, &outputReady, &toJsPointers);
 
   gain1->name = "gain1";
   gain2->name = "gain2";
@@ -290,7 +300,7 @@ void setupStreams() {
 
   gain1->pipe(gain2)->pipe(gain25)->pipe(gain3)->pipe(toJs);
 
-  usleep(1000);
+  usleep(1000); // time for threads to boot before giving control back to js
 
   (void)gain1;
 }

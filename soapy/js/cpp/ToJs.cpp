@@ -76,6 +76,7 @@ void ToJs::gotData(struct bufferevent *bev, struct evbuffer *buf, size_t lengthI
       std::cout << "ToJs signals data ready for processing" << endl;;
     }
   }
+  this->streamOutputReadyCondition->notify_one();
 
   // cout << temp_read[0] << "," << temp_read[1] << "," << temp_read[2] << endl;
   // if(_print) {
