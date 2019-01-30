@@ -1,6 +1,7 @@
 const Benchmark = require('benchmark');
 const suite = new Benchmark.Suite;
 const kindOf = require('kind-of');
+const _ = require('lodash');
 
 // grab our module
 const addon = require('../build/Release/vectorops.node');
@@ -55,13 +56,36 @@ function IShortToStreamable(iShort) {
   return uint8_view;
 }
 
+// Takes a Buffer or Uint8Array and returns an array of Javascript numbers
+function streamableToIShort(chunk) {
+  const uint8_in_view = new Uint8Array(chunk, 0, chunk.length);
+  let dataView = new DataView(uint8_in_view.buffer);
+
+  // width of input in bytes
+  const width = 4;
+
+  // how many uint32's (how many samples) did we get
+  const sz = chunk.length / width;
+
+  let result = Array(sz);
+
+  for(let i = 0; i < sz; i++) {
+    let val = dataView.getUint32(i*4, true);
+    result[i] = val;
+  }
+
+  return result;
+}
+
 
 function test_transform_buffer() {
-  setInterval(()=>{  console.log('still here') }, 333);
+  // setInterval(()=>{ console.log('still here') }, 333);
 
   let list = [];
+  let expected = [];
   for(let i = 0; i < 1024; i++) {
     list.push(i);
+    expected.push(i*8);
   }
 
   let buffer = Buffer.from(IShortToStreamable(list));
@@ -70,7 +94,12 @@ function test_transform_buffer() {
 
   addon.setStreamCallback(function(res) {
     console.log('stream callback');
-    console.log(res);
+    // console.log(res);
+
+    let same = _.isEqual(expected, streamableToIShort(res));
+
+    console.log('same ' + same);
+
     // let uint32_view = new Uint32Array(res.buffer);
     // console.log('uint32 view:');
     // console.log(uint32_view[0].toString(16));

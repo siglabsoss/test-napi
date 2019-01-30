@@ -8,8 +8,8 @@ namespace BevStream {
 
 
 typedef struct tojs_t {
-  size_t length; // in bytes
   void* mem; // pointer to memory that was allocated with malloc and will be free'd by nodejs
+  size_t length; // in bytes
 } tojs_t;
 
 class ToJs : public BevStream

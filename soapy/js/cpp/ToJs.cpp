@@ -58,7 +58,7 @@ void ToJs::gotData(struct bufferevent *bev, struct evbuffer *buf, size_t lengthI
 
   int res = evbuffer_remove(buf, ptr, this_read);
 
-  if( res != this_read ) {
+  if( (size_t)res != this_read ) {
     cout << "fatal evbuffer_remove() didn't write everything" << endl;
     return;
   }
@@ -68,10 +68,11 @@ void ToJs::gotData(struct bufferevent *bev, struct evbuffer *buf, size_t lengthI
     return;
   }
 
+  // scope for a lock
   {
     std::lock_guard<std::mutex> lk(*this->mutfruit);
-    *(this->outputReady) = true;
-    this->outputPointers->push_back((tojs_t){0,NULL});
+    // *(this->outputReady) = true;
+    this->outputPointers->push_back((tojs_t){ptr,this_read});
     if(_print) {
       std::cout << "ToJs signals data ready for processing" << endl;;
     }

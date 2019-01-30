@@ -56,13 +56,7 @@ struct Work {
   std::vector<uint32_t> results;
 };
 
-struct Work2 {
-  uv_work_t request;
-  Persistent<Function> callback;
 
-  // std::vector<uint32_t> locations;
-  // std::vector<uint32_t> results;
-};
 
 
 
@@ -172,6 +166,13 @@ void CalculateResultsAsync(const v8::FunctionCallbackInfo<v8::Value>&args) {
 //
 // My Stream types
 
+struct Work2 {
+  uv_work_t request;
+  Persistent<Function> callback;
+
+  std::vector<BevStream::tojs_t> workCopy;
+};
+
 BevStream::GainStream* gain1;
 BevStream::GainStream* gain2;
 BevStream::GainStream* gain25;
@@ -195,9 +196,21 @@ static void workAsync2(uv_work_t *req)
 
     cout << "before condition" << endl;
     std::unique_lock<std::mutex> lk(mutfruit);
-    streamOutputReadyCondition.wait(lk, []{return outputReady;});
+    streamOutputReadyCondition.wait(lk, []{return toJsPointers.size() > 0;});
     // after wait, we own the lock
-    cout << "after condition with " << toJsPointers.size() << endl;
+
+    // copy into global work pointer
+    work->workCopy = toJsPointers;
+
+    // erase the shared one
+    toJsPointers.erase(toJsPointers.begin(), toJsPointers.end());
+
+    // release the lock
+    lk.unlock();
+
+
+
+    cout << "after condition with " << work->workCopy.size() << endl;
 
 
 
@@ -241,37 +254,44 @@ static void workAsyncComplete2(uv_work_t *req, int status)
     //   result_list->Set(i, result);
     // }
 
-    char *dataIn = (char*)malloc(1024*4);
-    size_t length = 1024*4;
-    uint32_t *asint = (uint32_t*) dataIn;
+    // char *dataIn = (char*)malloc(1024*4);
+    // size_t length = 1024*4;
+    // uint32_t *asint = (uint32_t*) dataIn;
 
-    for(auto i = 0; i < 1024; i++) {
-      asint[i] = 0;
+    // for(auto i = 0; i < 1024; i++) {
+    //   asint[i] = 0;
+    // }
+    // asint[0] = 0xdeadbeef;
+
+    cout << "work->workCopy.size() " << work->workCopy.size() << endl;
+
+    for(unsigned i = 0; i < work->workCopy.size(); i++) {
+
+      MaybeLocal<Object> buffer = Nan::NewBuffer((char*)work->workCopy[i].mem, work->workCopy[i].length);
+
+      Handle<Value> argv[] = { buffer.ToLocalChecked() };
+
+      // execute the callback
+      // https://stackoverflow.com/questions/13826803/calling-javascript-function-from-a-c-callback-in-v8/28554065#28554065
+      // buffer copy happens here
+      Local<Function>::New(isolate, work->callback)->Call(isolate->GetCurrentContext()->Global(), 1, argv);
     }
 
-    asint[0] = 0xdeadbeef;
-    
+    // empty the copy we have in the work object, it will be filled next time workAsync2 runs
+    work->workCopy.erase(work->workCopy.begin(), work->workCopy.end());
 
-    MaybeLocal<Object> buffer = Nan::NewBuffer(dataIn, length);
-    // args.GetReturnValue().Set(buffer.ToLocalChecked());
+    // always requeue (how do we stop?)
+    uv_queue_work(uv_default_loop(),&work->request,workAsync2,workAsyncComplete2);
 
+    // asint[1] = 0xffffffff;
+    // Local<Function>::New(isolate, work->callback)->Call(isolate->GetCurrentContext()->Global(), 1, argv);
 
-    // set up return arguments
-    // Handle<Value> argv[] = { result_list };
-    Handle<Value> argv[] = { buffer.ToLocalChecked() };
+    // static int times = 0;
 
-    // execute the callback
-    // https://stackoverflow.com/questions/13826803/calling-javascript-function-from-a-c-callback-in-v8/28554065#28554065
-    Local<Function>::New(isolate, work->callback)->Call(isolate->GetCurrentContext()->Global(), 1, argv);
+    // times++;
 
-
-    static int times = 0;
-
-    times++;
-
-    if( times < 3 ) {
-      uv_queue_work(uv_default_loop(),&work->request,workAsync2,workAsyncComplete2);
-    }
+    // if( times < 3 ) {
+    // }
 
     // Free up the persistent function callback
     // work->callback.Reset();
@@ -298,7 +318,10 @@ void setupStreams() {
   gain25->name = "gain25";
   gain3->name = "gain3";
 
-  gain1->pipe(gain2)->pipe(gain25)->pipe(gain3)->pipe(toJs);
+  // gain3->gain = 33;
+
+  // gain1->pipe(gain2)->pipe(gain25)->pipe(gain3)->pipe(toJs);
+  gain1->pipe(gain2)->pipe(gain3)->pipe(toJs);
 
   usleep(1000); // time for threads to boot before giving control back to js
 
