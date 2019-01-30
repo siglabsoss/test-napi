@@ -154,8 +154,8 @@ function test_transform_buffer2() {
     // console.log(uint32_view[0].toString(16));
   });
 
-  addon.writeStreamData(buffer, buffer.length);
-  addon.writeStreamData(buffer, buffer.length);
+  // addon.writeStreamData(buffer, buffer.length);
+  // addon.writeStreamData(buffer, buffer.length);
 
   // let interval = setInterval(()=>{  addon.writeStreamData(buffer, buffer.length) }, 1000);
 

@@ -44,7 +44,6 @@ static void _handle_event_wrapper(bufferevent* bev, short kind, void* v) {
 BevStream::BevStream(bool defer_callbacks, bool print):
     _print(print)
     ,_defer_callbacks(defer_callbacks)
-    ,_thread_should_terminate(false)
     ,_init_run(false) 
                       {
 
@@ -93,8 +92,8 @@ void BevStream::threadMain() {
 }
 
 void BevStream::stopThread() {
-    cout << "fixme stopThread()" << endl;
-    _thread_should_terminate = true;
+    // cout << "fixme stopThread()" << endl;
+    // _thread_should_terminate = true;
     stopThreadDerivedClass();
 
     event_base_loopbreak(evbase);

@@ -13,8 +13,7 @@ GainStream::GainStream(bool defer_callback, bool print) : BevStream(defer_callba
 
 
 void GainStream::stopThreadDerivedClass() {
-  cout << "stopThreadDerivedClass() how to stop?" << endl;
-
+  // perform any gain stream specific tasks
 }
 
 // runs from same place (thread) that constructed us

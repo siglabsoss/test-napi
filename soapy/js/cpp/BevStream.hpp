@@ -44,7 +44,7 @@ public:
 
     // HiggsDriver* soapy;
 
-    std::atomic<bool> _thread_should_terminate; // set by outside
+    // std::atomic<bool> _thread_should_terminate; // set by outside
     
     std::atomic<bool> _init_run; // not sure if atomic needed but who cares
 

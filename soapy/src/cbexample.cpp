@@ -183,6 +183,7 @@ BevStream::ToJs* toJs;
 std::condition_variable streamOutputReadyCondition;
 std::mutex mutfruit;
 std::vector<BevStream::tojs_t> toJsPointers;
+bool requestShutdown;
 
 
 
@@ -195,7 +196,7 @@ static void workAsync2(uv_work_t *req)
 
     // cout << "before condition" << endl;
     std::unique_lock<std::mutex> lk(mutfruit);
-    streamOutputReadyCondition.wait(lk, []{return toJsPointers.size() > 0;});
+    streamOutputReadyCondition.wait(lk, []{return (toJsPointers.size() > 0)||requestShutdown;});
     // after wait, we own the lock
 
     // copy into global work pointer
@@ -242,8 +243,10 @@ static void workAsyncComplete2(uv_work_t *req, int status)
     // empty the copy we have in the work object, it will be filled next time workAsync2 runs
     work->workCopy.erase(work->workCopy.begin(), work->workCopy.end());
 
-    // always requeue (how do we stop?)
-    uv_queue_work(uv_default_loop(),&work->request,workAsync2,workAsyncComplete2);
+    if( !requestShutdown ) {
+      // always requeue (how do we stop?)
+      uv_queue_work(uv_default_loop(),&work->request,workAsync2,workAsyncComplete2);
+    }
 
 }
 
@@ -252,12 +255,14 @@ static void workAsyncComplete2(uv_work_t *req, int status)
 
 void startStream(const v8::FunctionCallbackInfo<v8::Value>&args) {
 
+  requestShutdown = false;
+
   gain1 = new BevStream::GainStream(true, false);
   gain2 = new BevStream::GainStream(true, false);
   // gain25= new BevStream::GainStream(true, false);
   gain3 = new BevStream::GainStream(true, false);
 
-  toJs = new BevStream::ToJs(true, true, &mutfruit, &streamOutputReadyCondition, &toJsPointers);
+  toJs = new BevStream::ToJs(true, true, &mutfruit, &streamOutputReadyCondition, &toJsPointers, &requestShutdown);
 
   gain1->name = "gain1";
   gain2->name = "gain2";
@@ -278,12 +283,17 @@ void startStream(const v8::FunctionCallbackInfo<v8::Value>&args) {
 void stopStream(const v8::FunctionCallbackInfo<v8::Value>&args) {
     // Isolate* isolate = args.GetIsolate();
 
-    cout << "stopStream()" << endl;
+  // requestShutdown = true;
+  // streamOutputReadyCondition.notify_one();
 
-    gain1->stopThread();
-    gain2->stopThread();
-    gain3->stopThread();
-    toJs->stopThread();
+  // toJs->shutdownJsHelper();
+
+  cout << "stopStream()" << endl;
+
+  gain1->stopThread();
+  gain2->stopThread();
+  gain3->stopThread();
+  toJs->stopThread();
 }
 
 

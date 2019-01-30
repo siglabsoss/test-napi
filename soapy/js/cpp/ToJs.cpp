@@ -11,24 +11,38 @@ using namespace std;
 // The idea is that we will fire a pending callback (From the async rain example) and then block
 // on a condition variable as described in https://en.cppreference.com/w/cpp/thread/condition_variable
 
-ToJs::ToJs(bool defer_callback, bool print, std::mutex *m, std::condition_variable *cv, std::vector<tojs_t> *pointers) :
+ToJs::ToJs(bool defer_callback, bool print, std::mutex *m, std::condition_variable *cv, std::vector<tojs_t> *pointers, bool* shutdownBool) :
    BevStream(defer_callback,print)
    ,mutfruit(m)
    ,streamOutputReadyCondition(cv)
-   ,outputPointers(pointers) {
+   ,outputPointers(pointers)
+   ,requestShutdown(shutdownBool) {
   this->name = "ToJs";
 }
 
 
 void ToJs::stopThreadDerivedClass() {
-  cout << "stopThreadDerivedClass() how to stop?" << endl;
-
+  shutdownJsHelper();
 }
 
 // runs from same place (thread) that constructed us
 void ToJs::setBufferOptions(bufferevent* in, bufferevent* out) {
   bufferevent_setwatermark(out, EV_READ, (1024)*4, 0);
   bufferevent_set_max_single_read(out, (1024)*4 );
+}
+
+void ToJs::shutdownJsHelper() {
+    // scope for a lock
+  {
+    std::lock_guard<std::mutex> lk(*this->mutfruit);
+    *requestShutdown = true;
+    // *(this->outputReady) = true;
+    // this->outputPointers->push_back((tojs_t){ptr,this_read});
+
+    // this->outputPointers->erase(this->outputPointers->begin(), this->outputPointers->end());
+  }
+  this->streamOutputReadyCondition->notify_one();
+
 }
 
 // runs on _thread
