@@ -57,6 +57,7 @@ function IShortToStreamable(iShort) {
 
 
 function test_transform_buffer() {
+  setInterval(()=>{  console.log('still here') }, 333);
 
   let list = [];
   for(let i = 0; i < 1024; i++) {
@@ -76,6 +77,8 @@ function test_transform_buffer() {
   });
 
   setInterval(()=>{  addon.writeStreamData(buffer, buffer.length) }, 1000);
+
+
 
 
   // addon.writeStreamData(buffer, buffer.length);

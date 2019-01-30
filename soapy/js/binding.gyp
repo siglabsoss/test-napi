@@ -44,6 +44,7 @@
       ,'cpp/BevPair2.cpp'
       ,'cpp/BevStream.cpp'
       ,'cpp/GainStream.cpp'
+      ,'cpp/ToJs.cpp'
       ]
 
       ,'include_dirs': [

@@ -22,8 +22,11 @@
 #include <thread>
 #include <iostream>
 #include <unistd.h>
+#include <condition_variable>
+#include <mutex>
 
 #include "GainStream.hpp"
+#include "ToJs.hpp"
 
 namespace demo {
 
@@ -53,6 +56,15 @@ struct Work {
   std::vector<uint32_t> results;
 };
 
+struct Work2 {
+  uv_work_t request;
+  Persistent<Function> callback;
+
+  // std::vector<uint32_t> locations;
+  // std::vector<uint32_t> results;
+};
+
+
 
 uint32_t calc_rain_stats(uint32_t &loc) {
   return loc * 2;
@@ -70,9 +82,11 @@ void pack_rain_result(v8::Isolate* isolate, v8::Local<v8::Object> & target, uint
 
 
 // called by libuv worker in separate thread
+// BLOCK AT WILL
 static void workAsync2(uv_work_t *req)
 {
-    Work *work = static_cast<Work *>(req->data); // grab the pointer to the object
+    Work2 *work = static_cast<Work2 *>(req->data); // grab the pointer to the object
+
 
     // this is the worker thread, lets build up the results
     // allocated results from the heap because we'll need
@@ -92,6 +106,7 @@ static void workAsync2(uv_work_t *req)
 }
 
 // called by libuv in event loop when async function completes
+// DO NOT BLOCK
 static void workAsyncComplete2(uv_work_t *req, int status)
 {
     Isolate * isolate = Isolate::GetCurrent();
@@ -99,17 +114,16 @@ static void workAsyncComplete2(uv_work_t *req, int status)
     // Fix for Node 4.x - thanks to https://github.com/nwjs/blink/commit/ecda32d117aca108c44f38c8eb2cb2d0810dfdeb
     v8::HandleScope handleScope(isolate);
 
-    Work *work = static_cast<Work *>(req->data);
+    Work2 *work = static_cast<Work2 *>(req->data);
 
     // the work has been done, and now we pack the results
     // vector into a Local array on the event-thread's stack.
-    Local<Array> result_list = Array::New(isolate);
-
-    for (unsigned int i = 0; i < work->results.size(); i++ ) {
-      Local<Object> result = Object::New(isolate);
-      pack_rain_result(isolate, result, work->results[i]);
-      result_list->Set(i, result);
-    }
+    // Local<Array> result_list = Array::New(isolate);
+    // for (unsigned int i = 0; i < work->results.size(); i++ ) {
+    //   Local<Object> result = Object::New(isolate);
+    //   pack_rain_result(isolate, result, work->results[i]);
+    //   result_list->Set(i, result);
+    // }
 
     char *dataIn = (char*)malloc(1024*4);
     size_t length = 1024*4;
@@ -281,20 +295,31 @@ BevStream::GainStream* gain2;
 BevStream::GainStream* gain25;
 BevStream::GainStream* gain3;
 
-Local<Function> streamCallback;
+BevStream::ToJs* toJs;
+
+std::condition_variable streamOutputReadyCondition;
+std::mutex mutfruit;
+bool outputReady;
+std::vector<BevStream::tojs_t> toJsPointers;
+
 
 void setupStreams() {
+
+  outputReady = false;
+
   gain1 = new BevStream::GainStream(true, false);
   gain2 = new BevStream::GainStream(true, false);
   gain25= new BevStream::GainStream(true, false);
   gain3 = new BevStream::GainStream(true, false);
+
+  toJs = new BevStream::ToJs(true, false, &mutfruit, &streamOutputReadyCondition, &outputReady, &toJsPointers);
 
   gain1->name = "gain1";
   gain2->name = "gain2";
   gain25->name = "gain25";
   gain3->name = "gain3";
 
-  gain1->pipe(gain2)->pipe(gain25)->pipe(gain3);
+  gain1->pipe(gain2)->pipe(gain25)->pipe(gain3)->pipe(toJs);
 
   usleep(1000);
 
@@ -305,7 +330,7 @@ void setupStreams() {
 void setStreamCallback(const v8::FunctionCallbackInfo<v8::Value>&args) {
     Isolate* isolate = args.GetIsolate();
 
-    Work * work = new Work();
+    Work2 * work = new Work2();
     work->request.data = work; // the request member will be available to us in subsequent callbacks, so we set it to ourself
 
     // extract each location (its a list) and store it in the work package
