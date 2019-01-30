@@ -11,11 +11,10 @@ using namespace std;
 // The idea is that we will fire a pending callback (From the async rain example) and then block
 // on a condition variable as described in https://en.cppreference.com/w/cpp/thread/condition_variable
 
-ToJs::ToJs(bool defer_callback, bool print, std::mutex *m, std::condition_variable *cv, bool *ready, std::vector<tojs_t> *pointers) :
+ToJs::ToJs(bool defer_callback, bool print, std::mutex *m, std::condition_variable *cv, std::vector<tojs_t> *pointers) :
    BevStream(defer_callback,print)
    ,mutfruit(m)
    ,streamOutputReadyCondition(cv)
-   ,outputReady(ready)
    ,outputPointers(pointers) {
   this->name = "ToJs";
 }

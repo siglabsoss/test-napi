@@ -87,20 +87,17 @@ void BevStream::threadMain() {
     auto retval = event_base_loop(evbase, EVLOOP_NO_EXIT_ON_EMPTY);
 
 
-    cout << "!!!!!!!!!!!!!!!!! BevStream::threadMain() exiting " << endl;
-    cout << "!!!!!!!!!!!!!!!!! BevStream::threadMain() exiting " << endl;
-    cout << "!!!!!!!!!!!!!!!!! BevStream::threadMain() exiting " << endl;
-    
+    cout << "!!!!!!!!!!!!!!!!! BevStream(" << name << ")::threadMain() exiting " << endl;
 
     cout << "event_base_dispatch: " << retval << endl;
-
-    std::cout << "BevStream::threadMain() closing" << std::endl;
 }
 
 void BevStream::stopThread() {
     cout << "fixme stopThread()" << endl;
     _thread_should_terminate = true;
     stopThreadDerivedClass();
+
+    event_base_loopbreak(evbase);
 }
 
 

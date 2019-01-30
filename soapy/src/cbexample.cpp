@@ -175,14 +175,13 @@ struct Work2 {
 
 BevStream::GainStream* gain1;
 BevStream::GainStream* gain2;
-BevStream::GainStream* gain25;
+// BevStream::GainStream* gain25;
 BevStream::GainStream* gain3;
 
 BevStream::ToJs* toJs;
 
 std::condition_variable streamOutputReadyCondition;
 std::mutex mutfruit;
-bool outputReady;
 std::vector<BevStream::tojs_t> toJsPointers;
 
 
@@ -194,7 +193,7 @@ static void workAsync2(uv_work_t *req)
 {
     Work2 *work = static_cast<Work2 *>(req->data); // grab the pointer to the object
 
-    cout << "before condition" << endl;
+    // cout << "before condition" << endl;
     std::unique_lock<std::mutex> lk(mutfruit);
     streamOutputReadyCondition.wait(lk, []{return toJsPointers.size() > 0;});
     // after wait, we own the lock
@@ -210,28 +209,9 @@ static void workAsync2(uv_work_t *req)
 
 
 
-    cout << "after condition with " << work->workCopy.size() << endl;
+    // cout << "after condition with " << work->workCopy.size() << endl;
 
 
-
-
-
-
-    // this is the worker thread, lets build up the results
-    // allocated results from the heap because we'll need
-    // to access in the event loop later to send back
-    // work->results.resize(work->locations.size());
-    // std::transform(work->locations.begin(), work->locations.end(), work->results.begin(), calc_rain_stats);
-
-    // as soon as we return, the other callback will fire
-
-    // static int times = 0;
-
-    // times++;
-
-
-    // that wasn't really that long of an operation, so lets pretend it took longer...
-    // std::this_thread::sleep_for(chrono::seconds(3));
 }
 
 // called by libuv in event loop when async function completes
@@ -245,25 +225,7 @@ static void workAsyncComplete2(uv_work_t *req, int status)
 
     Work2 *work = static_cast<Work2 *>(req->data);
 
-    // the work has been done, and now we pack the results
-    // vector into a Local array on the event-thread's stack.
-    // Local<Array> result_list = Array::New(isolate);
-    // for (unsigned int i = 0; i < work->results.size(); i++ ) {
-    //   Local<Object> result = Object::New(isolate);
-    //   pack_rain_result(isolate, result, work->results[i]);
-    //   result_list->Set(i, result);
-    // }
-
-    // char *dataIn = (char*)malloc(1024*4);
-    // size_t length = 1024*4;
-    // uint32_t *asint = (uint32_t*) dataIn;
-
-    // for(auto i = 0; i < 1024; i++) {
-    //   asint[i] = 0;
-    // }
-    // asint[0] = 0xdeadbeef;
-
-    cout << "work->workCopy.size() " << work->workCopy.size() << endl;
+    // cout << "work->workCopy.size() " << work->workCopy.size() << endl;
 
     for(unsigned i = 0; i < work->workCopy.size(); i++) {
 
@@ -283,39 +245,23 @@ static void workAsyncComplete2(uv_work_t *req, int status)
     // always requeue (how do we stop?)
     uv_queue_work(uv_default_loop(),&work->request,workAsync2,workAsyncComplete2);
 
-    // asint[1] = 0xffffffff;
-    // Local<Function>::New(isolate, work->callback)->Call(isolate->GetCurrentContext()->Global(), 1, argv);
-
-    // static int times = 0;
-
-    // times++;
-
-    // if( times < 3 ) {
-    // }
-
-    // Free up the persistent function callback
-    // work->callback.Reset();
-    // delete work;
-
 }
 
 
 
 
-void setupStreams() {
-
-  outputReady = false;
+void startStream(const v8::FunctionCallbackInfo<v8::Value>&args) {
 
   gain1 = new BevStream::GainStream(true, false);
   gain2 = new BevStream::GainStream(true, false);
-  gain25= new BevStream::GainStream(true, false);
+  // gain25= new BevStream::GainStream(true, false);
   gain3 = new BevStream::GainStream(true, false);
 
-  toJs = new BevStream::ToJs(true, true, &mutfruit, &streamOutputReadyCondition, &outputReady, &toJsPointers);
+  toJs = new BevStream::ToJs(true, true, &mutfruit, &streamOutputReadyCondition, &toJsPointers);
 
   gain1->name = "gain1";
   gain2->name = "gain2";
-  gain25->name = "gain25";
+  // gain25->name = "gain25";
   gain3->name = "gain3";
 
   // gain3->gain = 33;
@@ -325,8 +271,21 @@ void setupStreams() {
 
   usleep(1000); // time for threads to boot before giving control back to js
 
-  (void)gain1;
+  // (void)gain1;
 }
+
+
+void stopStream(const v8::FunctionCallbackInfo<v8::Value>&args) {
+    // Isolate* isolate = args.GetIsolate();
+
+    cout << "stopStream()" << endl;
+
+    gain1->stopThread();
+    gain2->stopThread();
+    gain3->stopThread();
+    toJs->stopThread();
+}
+
 
 
 void setStreamCallback(const v8::FunctionCallbackInfo<v8::Value>&args) {
@@ -334,14 +293,6 @@ void setStreamCallback(const v8::FunctionCallbackInfo<v8::Value>&args) {
 
     Work2 * work = new Work2();
     work->request.data = work; // the request member will be available to us in subsequent callbacks, so we set it to ourself
-
-    // extract each location (its a list) and store it in the work package
-    // locations is on the heap, accessible in the libuv threads
-    // Local<Array> input = Local<Array>::Cast(args[0]);
-    // unsigned int num_locations = input->Length();
-    // for (unsigned int i = 0; i < num_locations; i++) {
-    //   work->locations.push_back(unpack_location(isolate, Local<Object>::Cast(input->Get(i))));
-    // }
 
 
     // store the callback from JS in the work package so we can
@@ -355,6 +306,7 @@ void setStreamCallback(const v8::FunctionCallbackInfo<v8::Value>&args) {
 
     args.GetReturnValue().Set(Undefined(isolate));
 }
+
 
 
 NAN_METHOD(writeStreamData) {
@@ -421,7 +373,7 @@ NAN_METHOD(TransformBuffer)
   // const uint32_t* asintIn = (uint32_t*) dataIn;
 
   char *dataOut = (char*)malloc(length);
-  uint32_t *asint = (uint32_t*) dataIn;
+  // uint32_t *asint = (uint32_t*) dataIn;
 
   // cout << asint[0] << " " << asint[1] << endl;
 
@@ -480,12 +432,14 @@ NAN_MODULE_INIT(Init) {
   NODE_SET_METHOD(target, "calculate_results_async", CalculateResultsAsync);
   NODE_SET_METHOD(target, "GetBuffer", GetBuffer);
   NODE_SET_METHOD(target, "setStreamCallback", setStreamCallback);
+  NODE_SET_METHOD(target, "stopStream", stopStream);
+  NODE_SET_METHOD(target, "startStream", startStream);
   // NODE_SET_METHOD(target, "TransformBuffer", TransformBuffer);
   NAN_EXPORT(target, TransformBuffer);
   NAN_EXPORT(target, writeStreamData);
 
 
-  setupStreams();
+  // setupStreams();
 }
 
 #pragma GCC diagnostic push 

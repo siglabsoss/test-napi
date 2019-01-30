@@ -81,6 +81,8 @@ function streamableToIShort(chunk) {
 function test_transform_buffer() {
   // setInterval(()=>{ console.log('still here') }, 333);
 
+  let doShutdown = false;
+
   let list = [];
   let expected = [];
   for(let i = 0; i < 1024; i++) {
@@ -91,6 +93,8 @@ function test_transform_buffer() {
   let buffer = Buffer.from(IShortToStreamable(list));
   // console.log(buffer.length);
   // console.log(buffer.slice(0,12));
+
+  addon.startStream();
 
   addon.setStreamCallback(function(res) {
     console.log('stream callback');
@@ -105,7 +109,57 @@ function test_transform_buffer() {
     // console.log(uint32_view[0].toString(16));
   });
 
-  setInterval(()=>{  addon.writeStreamData(buffer, buffer.length) }, 1000);
+  let interval = setInterval(()=>{  addon.writeStreamData(buffer, buffer.length) }, 1000);
+
+  setTimeout(()=>{ addon.stopStream(); clearInterval(interval); }, 3000);
+
+
+
+
+  // addon.writeStreamData(buffer, buffer.length);
+  // addon.writeStreamData(buffer, buffer.length);
+  // addon.writeStreamData(buffer, buffer.length);
+  // addon.writeStreamData(buffer, buffer.length);
+}
+
+
+function test_transform_buffer2() {
+  // setInterval(()=>{ console.log('still here') }, 333);
+
+  let doShutdown = false;
+
+  let list = [];
+  let expected = [];
+  for(let i = 0; i < 1024; i++) {
+    list.push(i);
+    expected.push(i*8);
+  }
+
+  let buffer = Buffer.from(IShortToStreamable(list));
+  // console.log(buffer.length);
+  // console.log(buffer.slice(0,12));
+
+  addon.startStream();
+
+  addon.setStreamCallback(function(res) {
+    console.log('stream callback');
+    // console.log(res);
+
+    let same = _.isEqual(expected, streamableToIShort(res));
+
+    console.log('same ' + same);
+
+    // let uint32_view = new Uint32Array(res.buffer);
+    // console.log('uint32 view:');
+    // console.log(uint32_view[0].toString(16));
+  });
+
+  addon.writeStreamData(buffer, buffer.length);
+  addon.writeStreamData(buffer, buffer.length);
+
+  // let interval = setInterval(()=>{  addon.writeStreamData(buffer, buffer.length) }, 1000);
+
+  setTimeout(()=>{ addon.stopStream(); }, 1000);
 
 
 
@@ -178,6 +232,7 @@ function test_torture() {
 // test_callback();
 
 // test_get_buffer();
-test_transform_buffer();
+// test_transform_buffer();
+test_transform_buffer2();
 // test_torture();
 // run_bench();

@@ -27,11 +27,11 @@ void GainStream::setBufferOptions(bufferevent* in, bufferevent* out) {
 void GainStream::gotData(struct bufferevent *bev, struct evbuffer *buf, size_t lengthIn) {
   // cout << "Gain got data with " << lengthIn << endl;
 
-  if(name == "gain3") {
-    static int count = 0;
-    cout << count << endl;
-    count+=(lengthIn/4);
-  }
+  // if(name == "gain3") {
+  //   static int count = 0;
+  //   cout << count << endl;
+  //   count+=(lengthIn/4);
+  // }
 
   if(next) {
     if(_print) {

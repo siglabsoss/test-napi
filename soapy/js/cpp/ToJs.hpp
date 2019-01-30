@@ -16,7 +16,7 @@ class ToJs : public BevStream
 {
 public:
 
-  ToJs(bool defer_callback, bool print, std::mutex *m, std::condition_variable *cv, bool *ready, std::vector<tojs_t> *pointers);
+  ToJs(bool defer_callback, bool print, std::mutex *m, std::condition_variable *cv, std::vector<tojs_t> *pointers);
 
   void stopThreadDerivedClass();
   void setBufferOptions(bufferevent* in, bufferevent* out);
@@ -24,7 +24,6 @@ public:
 
   std::mutex *mutfruit = 0;
   std::condition_variable *streamOutputReadyCondition = 0;
-  bool *outputReady = 0;
   std::vector<tojs_t> *outputPointers;
 
 };
